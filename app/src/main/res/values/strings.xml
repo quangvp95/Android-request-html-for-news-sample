@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">DemoNews</string>
+    <string name="ago" translatable="false">ago</string>
+    <string name="minutes" translatable="false">minutes</string>
+    <string name="hours" translatable="false">hours</string>
+
+</resources>

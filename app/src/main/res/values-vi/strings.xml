@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DemoNews</string>
+    <string name="hours" translatable="false">giờ</string>
+    <string name="minutes" translatable="false">phút</string>
+    <string name="ago" translatable="false">trước</string>
+</resources>
