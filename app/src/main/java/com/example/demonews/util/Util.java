@@ -29,6 +29,11 @@ public class Util {
         return result;
     }
 
+    public static long getNewsId(String url) {
+        int hash = url.hashCode();
+        return Math.abs(hash);
+    }
+
     private static final SimpleDateFormat sTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ROOT);
     public static long convertStringToDate(String dateString) throws ParseException {
         Date date = sTime.parse(dateString);

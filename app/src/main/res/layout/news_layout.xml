@@ -55,6 +55,7 @@
             android:lineSpacingExtra="2dp"
             android:paddingStart="3dp"
             android:paddingEnd="3dp"
+            android:maxLines="3"
             android:textColor="@color/snippets_headline_text_color"
             android:textSize="16sp"
             android:textStyle="bold" />

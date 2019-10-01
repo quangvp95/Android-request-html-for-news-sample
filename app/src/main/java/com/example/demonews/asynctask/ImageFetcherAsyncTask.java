@@ -37,6 +37,7 @@ public class ImageFetcherAsyncTask extends AsyncTask<Void, ImageFetcherAsyncTask
             News news = mList.get(i);
             if (news.getImage() == null && !TextUtils.isEmpty(news.getImgUrl())) {
                 try {
+                    // TODO: Nhiều link ảnh không lấy được do "java.security.cert.CertPathValidatorException: Trust anchor for certification path not found"
                     URLConnection connection = (new URL(news.getImgUrl())).openConnection();
                     connection.setConnectTimeout(5000);
                     connection.setReadTimeout(5000);
@@ -44,7 +45,19 @@ public class ImageFetcherAsyncTask extends AsyncTask<Void, ImageFetcherAsyncTask
                     connection.connect();
 
                     InputStream input = connection.getInputStream();
-                    Bitmap myBitmap = getResizedBitmap(BitmapFactory.decodeStream(input), mThumbnailHeight, mThumbnailWidth);
+
+                    final BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeStream(input, null, options);
+                    int width = options.outWidth;
+                    int height = options.outHeight;
+                    final int heightRatio = Math.round((float) height / (float) mThumbnailHeight);
+                    final int widthRatio = Math.round((float) width / (float) mThumbnailWidth);
+                    options.inSampleSize = Math.min(widthRatio, heightRatio);
+
+                    // QuangNHe: Decode image
+                    options.inJustDecodeBounds = false;
+                    Bitmap myBitmap = getResizedBitmap(BitmapFactory.decodeStream(input, null, options), mThumbnailHeight, mThumbnailWidth);
                     publishProgress(new Pair(myBitmap, news.getUrl()));
                     input.close();
                 } catch (IOException e) {
@@ -56,21 +69,24 @@ public class ImageFetcherAsyncTask extends AsyncTask<Void, ImageFetcherAsyncTask
         return null;
     }
 
-    public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
+    private Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
         int width = bm.getWidth();
         int height = bm.getHeight();
         float scaleWidth = ((float) newWidth) / width;
         float scaleHeight = ((float) newHeight) / height;
+        float scale = Math.max(scaleWidth, scaleHeight);
+
         // CREATE A MATRIX FOR THE MANIPULATION
         Matrix matrix = new Matrix();
         // RESIZE THE BIT MAP
-        matrix.postScale(scaleWidth, scaleHeight);
+        matrix.postScale(scale, scale);
+
+        int offsetX = (int) ((width * scale - newWidth) / 2);
+        int offsetY = (int) ((height * scale - newHeight) / 2);
 
         // "RECREATE" THE NEW BITMAP
-        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height,
+        return Bitmap.createBitmap(bm, offsetX, offsetY, width - offsetX * 2, height - offsetY * 2,
                 matrix, false);
-
-        return resizedBitmap;
     }
 
     @Override

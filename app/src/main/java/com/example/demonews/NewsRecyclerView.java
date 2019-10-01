@@ -1,7 +1,9 @@
 package com.example.demonews;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -11,8 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.demonews.asynctask.ImageFetcherAsyncTask;
 import com.example.demonews.asynctask.NewsFetcherAsyncTask;
-import com.example.demonews.db.NewsDatabaseHelper;
+import com.example.demonews.asynctask.SaveDataAsyncTask;
+import com.example.demonews.db.NewsProvider;
 import com.example.demonews.entity.News;
+import com.example.demonews.util.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,11 +26,10 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcherDelegate, ImageFetcherAsyncTask.INewsImageFetcherDelegate {
-    private ArrayList<News> mList;
+    private ArrayList<News> mList, mListUpdateImg;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
     private int mThumbnailHeight, mThumbnailWidth;
-    private NewsDatabaseHelper mHelper;
 
     public static final Comparator<News> comparator = new Comparator<News>() {
         @Override
@@ -49,6 +52,7 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
     private void init() {
         mList = new ArrayList<>();
+        mListUpdateImg = new ArrayList<>();
         layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
 
@@ -57,14 +61,29 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
         mThumbnailWidth = (int) getResources().getDimension(R.dimen.news_thumbnail_width);
         mThumbnailHeight = (int) getResources().getDimension(R.dimen.news_thumbnail_height);
-
-        mHelper = new NewsDatabaseHelper(getContext());
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        mList.addAll(mHelper.getNews());
+        Cursor cursor = getContext().getContentResolver().query(NewsProvider.CONTENT_URI,null, null, null, null);
+        if (cursor != null) {
+            mList.clear();
+            if (cursor.moveToFirst()) {
+                do {
+                    String mTitle = cursor.getString(0);
+                    String mAuthor = cursor.getString(1);
+                    String mUrl = cursor.getString(2);
+                    long mTime = cursor.getLong(3);
+                    String mImgUrl = cursor.getString(4);
+                    Bitmap bitmap = Util.getImage(cursor.getBlob(5));
+
+                    News news = new News(mTitle, mAuthor, mUrl, mTime, mImgUrl, bitmap);
+                    mList.add(news);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
 
         fetch(null);
     }
@@ -78,24 +97,32 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
     @Override
     public void onFetchNewsFinish(ArrayList<News> listNews) {
-        Collections.sort(listNews);
+        ArrayList<News> listForUpdate = new ArrayList<>(),
+                listForInsert = new ArrayList<>(),
+                listForDelete = new ArrayList<>(mList);
         for (News news : listNews) {
             boolean isOld = false;
             for (int i = 0; i < mList.size(); i++) {
                 News oldNews = mList.get(i);
                 if (news.getUrl().equals(oldNews.getUrl())) {
-                    oldNews.setAuthor(news.getAuthor());
-                    oldNews.setImgUrl(news.getImgUrl());
-                    oldNews.setTitle(news.getTitle());
+                    // QuangNHe: mList sẽ lấy tất cả obj mới -> cần lưu ảnh của các obj cũ để tái sử dụng
+                    // Các thông tin khác thì không cần lưu để update lại database
+                    if (TextUtils.isEmpty(news.getImgUrl()))
+                        news.setImgUrl(oldNews.getImgUrl());
+                    if (news.getImgUrl().equals(oldNews.getImgUrl()))
+                        news.setImage(oldNews.getImage());
                     isOld = true;
+                    listForUpdate.add(news);
+                    listForDelete.remove(oldNews);
                     break;
                 }
             }
             if (!isOld) {
-                mList.add(0, news);
-                mHelper.addNews(news);
+                listForInsert.add(news);
             }
         }
+        mList.clear();
+        mList.addAll(listNews);
 
         Collections.sort(mList);
 
@@ -103,7 +130,11 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
         if (mCallback != null)
             mCallback.onFetchNewsFinish(listNews);
+        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.INSERT, listForInsert).execute();
+        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.UPDATE_INFO, listForUpdate).execute();
+        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.DELETE, listForDelete).execute();
         new ImageFetcherAsyncTask(mThumbnailWidth, mThumbnailHeight, mList, this).execute();
+        mListUpdateImg.clear();
     }
 
     @Override
@@ -114,6 +145,7 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
                 System.out.println("QuangNHe onFetchImageFinish " + bitmap);
                 news.setImage(bitmap);
 //                mHelper.updateNews(news);
+                mListUpdateImg.add(news);
                 mAdapter.notifyItemChanged(i);
                 break;
             }
@@ -123,6 +155,7 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
     @Override
     public void onFetchDone() {
+        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.UPDATE_IMG, mListUpdateImg).execute();
         System.out.println("QuangNHe onFetchDone DONE " + mList.size());
         for (int i = 0; i < mList.size(); i++) {
             if (mList.get(i).getImage() != null)
@@ -131,34 +164,5 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
                 System.out.println("QuangNHe onFetchDone i: NULL");
         }
         System.out.println("QuangNHe onFetchDone DONE " + mList.size());
-    }
-
-    public static final int sizeOf(Object object) throws IOException {
-
-        if (object == null)
-            return -1;
-
-        // Special output stream use to write the content
-        // of an output stream to an internal byte array.
-        ByteArrayOutputStream byteArrayOutputStream =
-                new ByteArrayOutputStream();
-
-        // Output stream that can write object
-        ObjectOutputStream objectOutputStream =
-                new ObjectOutputStream(byteArrayOutputStream);
-
-        // Write object and close the output stream
-        objectOutputStream.writeObject(object);
-        objectOutputStream.flush();
-        objectOutputStream.close();
-
-        // Get the byte array
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-        // TODO can the toByteArray() method return a
-        // null array ?
-        return byteArray == null ? 0 : byteArray.length;
-
-
     }
 }
