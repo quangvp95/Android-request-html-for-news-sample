@@ -15,15 +15,15 @@ import java.text.ParseException;
 import java.util.ArrayList;
 
 public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>> {
-    public interface INewFetcherDelegate {
+    public interface INewFetcher {
         void onFetchNewsFinish(ArrayList<News> news);
     }
 
     private static String HOST = "http://m.home.vn/web/guest/danh-sach-tin-tuc/-/category/newsMobile";
 
-    private INewFetcherDelegate mCallback;
+    private INewFetcher mCallback;
 
-    public NewsFetcherAsyncTask(INewFetcherDelegate callback) {
+    public NewsFetcherAsyncTask(INewFetcher callback) {
         mCallback = callback;
     }
 

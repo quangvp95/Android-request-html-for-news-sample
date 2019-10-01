@@ -1,17 +1,22 @@
 package com.example.demonews;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.demonews.cache.NewsImageCache;
 import com.example.demonews.entity.News;
 import com.example.demonews.util.Util;
 
@@ -23,11 +28,13 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     private Context mContext;
     private ArrayList<News> mList;
     private Drawable mDefaultThumbnail;
+    private NewsImageCache mImageCache;
 
     NewsAdapter(Context context, ArrayList<News> mList) {
         mContext = context;
         this.mList = mList;
         mDefaultThumbnail = context.getResources().getDrawable(R.drawable.home_vn, null);
+        mImageCache = new NewsImageCache(context);
     }
 
     @NonNull
@@ -40,14 +47,24 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull NewsViewHolder holder, int position) {
-        News news = mList.get(position);
+        final News news = mList.get(position);
         holder.mHeadline.setText(news.getTitle());
         holder.mPublisher.setText(news.getAuthor());
         holder.mDate.setText(Util.convertIntDateToString(mContext, news.getTime()));
-        if (news.getImage() != null)
-            holder.mThumbnail.setImageBitmap(news.getImage());
-        else
-            holder.mThumbnail.setImageDrawable(mDefaultThumbnail);
+        if (NewsRecyclerView.USE_GOOGLE_CACHE_IMG_GUIDE) {
+            mImageCache.loadBitmap(holder.mThumbnail, news);
+        } else {
+            if (news.getImage() != null)
+                holder.mThumbnail.setImageBitmap(news.getImage());
+            else
+                holder.mThumbnail.setImageDrawable(mDefaultThumbnail);
+        }
+        holder.mView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(mContext, news.getTitle(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -73,8 +90,5 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull NewsViewHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
-    }
+
 }

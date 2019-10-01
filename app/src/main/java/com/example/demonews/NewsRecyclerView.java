@@ -18,18 +18,17 @@ import com.example.demonews.db.NewsProvider;
 import com.example.demonews.entity.News;
 import com.example.demonews.util.Util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcherDelegate, ImageFetcherAsyncTask.INewsImageFetcherDelegate {
+public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcher, ImageFetcherAsyncTask.INewsImageFetcher {
     private ArrayList<News> mList, mListUpdateImg;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
     private int mThumbnailHeight, mThumbnailWidth;
+
+    public static final boolean USE_GOOGLE_CACHE_IMG_GUIDE = false;
 
     public static final Comparator<News> comparator = new Comparator<News>() {
         @Override
@@ -88,9 +87,9 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
         fetch(null);
     }
 
-    NewsFetcherAsyncTask.INewFetcherDelegate mCallback;
+    NewsFetcherAsyncTask.INewFetcher mCallback;
 
-    public void fetch(NewsFetcherAsyncTask.INewFetcherDelegate callback) {
+    public void fetch(NewsFetcherAsyncTask.INewFetcher callback) {
         mCallback = callback;
         new NewsFetcherAsyncTask(this).execute();
     }
@@ -133,7 +132,8 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.INSERT, listForInsert).execute();
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.UPDATE_INFO, listForUpdate).execute();
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.DELETE, listForDelete).execute();
-        new ImageFetcherAsyncTask(mThumbnailWidth, mThumbnailHeight, mList, this).execute();
+        if (!USE_GOOGLE_CACHE_IMG_GUIDE)
+            new ImageFetcherAsyncTask(mThumbnailWidth, mThumbnailHeight, mList, this).execute();
         mListUpdateImg.clear();
     }
 

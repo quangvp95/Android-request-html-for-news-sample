@@ -11,7 +11,7 @@ import com.example.demonews.entity.News;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, NewsFetcherAsyncTask.INewFetcherDelegate {
+public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, NewsFetcherAsyncTask.INewFetcher {
 
     NewsRecyclerView mNewsRecyclerView;
     ListNewsLayout mListNewsLayout;
@@ -25,9 +25,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         mListNewsLayout = findViewById(R.id.list_news);
         mListNewsLayout.setOnRefreshListener(this);
-        mListNewsLayout.setColorSchemeResources(
-                R.color.swipe_color_1, R.color.swipe_color_2,
-                R.color.swipe_color_3, R.color.swipe_color_4);
     }
 
     public void fetch(View view) {

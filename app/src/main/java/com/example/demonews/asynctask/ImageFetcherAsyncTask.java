@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.text.TextUtils;
 
 import com.example.demonews.entity.News;
+import com.example.demonews.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,16 +16,17 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class ImageFetcherAsyncTask extends AsyncTask<Void, ImageFetcherAsyncTask.Pair, Void> {
-    public interface INewsImageFetcherDelegate {
+    public interface INewsImageFetcher {
         void onFetchImageFinish(Bitmap bitmap, String position);
+
         void onFetchDone();
     }
 
-    private INewsImageFetcherDelegate mCallback;
+    private INewsImageFetcher mCallback;
     private ArrayList<News> mList;
     private int mThumbnailHeight, mThumbnailWidth;
 
-    public ImageFetcherAsyncTask(int mThumbnailWidth, int mThumbnailHeight, ArrayList<News> mList, INewsImageFetcherDelegate mCallback) {
+    public ImageFetcherAsyncTask(int mThumbnailWidth, int mThumbnailHeight, ArrayList<News> mList, INewsImageFetcher mCallback) {
         this.mCallback = mCallback;
         this.mList = mList;
         this.mThumbnailHeight = mThumbnailHeight;
@@ -57,7 +59,12 @@ public class ImageFetcherAsyncTask extends AsyncTask<Void, ImageFetcherAsyncTask
 
                     // QuangNHe: Decode image
                     options.inJustDecodeBounds = false;
-                    Bitmap myBitmap = getResizedBitmap(BitmapFactory.decodeStream(input, null, options), mThumbnailHeight, mThumbnailWidth);
+                    Bitmap bm = BitmapFactory.decodeStream(input, null, options);
+                    if (bm == null) {
+                        System.out.println("QuangNHe onFetchImageFinish ERR bm == null " + news.getImgUrl());
+                        return null;
+                    }
+                    Bitmap myBitmap = getResizedBitmap(bm, mThumbnailHeight, mThumbnailWidth);
                     publishProgress(new Pair(myBitmap, news.getUrl()));
                     input.close();
                 } catch (IOException e) {

@@ -19,13 +19,6 @@ import java.util.Objects;
 public class NewsProvider extends ContentProvider {
     private static final String AUTHORITY = "com.example.demonews.data.NewsProvider";
 
-    public static final int NEWS = 100;
-    public static final int NEWS_ID = 110;
-
-    private static final String NEWS_BASE_PATH = "news";
-    public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
-            + "/" + NEWS_BASE_PATH);
-
     public static final String KEY_ID = NewsDatabaseHelper.KEY_ID;
     public static final String KEY_TITLE = NewsDatabaseHelper.KEY_TITLE;
     public static final String KEY_AUTHOR = NewsDatabaseHelper.KEY_AUTHOR;
@@ -33,6 +26,15 @@ public class NewsProvider extends ContentProvider {
     public static final String KEY_TIME = NewsDatabaseHelper.KEY_TIME;
     public static final String KEY_IMG_URL = NewsDatabaseHelper.KEY_IMG_URL;
     public static final String KEY_IMAGE = NewsDatabaseHelper.KEY_IMAGE;
+
+    public static final int NEWS = 100;
+    public static final int NEWS_ID = 110;
+
+    private static final String NEWS_BASE_PATH = "news";
+
+    public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
+            + "/" + NEWS_BASE_PATH);
+    public static final String SELECTION_CLAUSE = KEY_ID +  " = ?";
 
     private static final UriMatcher sURIMatcher = new UriMatcher(
             UriMatcher.NO_MATCH);

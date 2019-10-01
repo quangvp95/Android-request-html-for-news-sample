@@ -14,7 +14,6 @@ import static com.example.demonews.db.NewsProvider.*;
 
 public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
 
-    private static final String SELECTION_CLAUSE = KEY_ID +  " = ?";
     public enum TYPE {
         INSERT, UPDATE_INFO, UPDATE_IMG, DELETE
     }

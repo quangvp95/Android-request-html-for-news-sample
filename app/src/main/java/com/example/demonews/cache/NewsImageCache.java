@@ -1,25 +1,41 @@
 package com.example.demonews.cache;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.Environment;
 import android.util.LruCache;
 import android.widget.ImageView;
 
-import java.io.File;
+import com.example.demonews.R;
+import com.example.demonews.asynctask.BitmapWorkerTask;
+import com.example.demonews.asynctask.SaveDataAsyncTask;
+import com.example.demonews.db.NewsProvider;
+import com.example.demonews.entity.News;
+import com.example.demonews.util.Util;
+
 import java.lang.ref.WeakReference;
 
 import static android.os.Environment.isExternalStorageRemovable;
+import static com.example.demonews.db.NewsProvider.CONTENT_URI;
+import static com.example.demonews.db.NewsProvider.KEY_IMAGE;
+import static com.example.demonews.db.NewsProvider.SELECTION_CLAUSE;
 
 /**
  * https://stuff.mit.edu/afs/sipb/project/android/docs/training/displaying-bitmaps/process-bitmap.html#concurrency
  */
-public class NewsImageCache {
+public class NewsImageCache implements BitmapWorkerTask.IBitmapWorker {
     private LruCache<String, Bitmap> mMemoryCache;
+    private Bitmap mDefaultBitmap;
+    private Context mContext;
+    private int mThumbnailWidth, mThumbnailHeight;
 
-    public NewsImageCache() {
+    public NewsImageCache(Context context) {
         // Get max available VM memory, exceeding this amount will throw an
         // OutOfMemory exception. Stored in kilobytes as LruCache takes an
         // int in its constructor.
@@ -35,38 +51,78 @@ public class NewsImageCache {
                 // number of items.
                 return bitmap.getByteCount() / 1024;
             }
+
+            @Override
+            protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
+                super.entryRemoved(evicted, key, oldValue, newValue);
+            }
         };
+
+        mContext = context;
+        mDefaultBitmap = BitmapFactory.decodeResource(context.getResources(),
+                R.drawable.home_vn);
+        mThumbnailWidth = (int) context.getResources().getDimension(R.dimen.news_thumbnail_width);
+        mThumbnailHeight = (int) context.getResources().getDimension(R.dimen.news_thumbnail_height);
+
     }
 
-    class BitmapWorkerTask extends AsyncTask<Integer, Void, Bitmap> {
-        private final WeakReference<ImageView> imageViewReference;
-        private int data = 0;
-
-        public BitmapWorkerTask(ImageView imageView) {
-            // Use a WeakReference to ensure the ImageView can be garbage collected
-            imageViewReference = new WeakReference<ImageView>(imageView);
+    public void loadBitmap(ImageView imageView, News news) {
+        Bitmap result = mMemoryCache.get(news.getUrl());
+        if (result != null) {
+            imageView.setImageBitmap(result);
+            return;
         }
 
-        // Decode image in background.
-        @Override
-        protected Bitmap doInBackground(Integer... params) {
-            data = params[0];
-            return decodeSampledBitmapFromResource(imageViewReference, data, 100, 100);
+        if (cancelPotentialDownload(news, imageView)) {
+            BitmapWorkerTask task = new BitmapWorkerTask(this, imageView, news, mThumbnailWidth, mThumbnailHeight);
+            imageView.setImageDrawable(new WorkerDrawable(mContext.getResources(), mDefaultBitmap, task));
+            task.execute();
         }
+    }
 
-        private Bitmap decodeSampledBitmapFromResource(WeakReference<ImageView> imageViewReference, int data, int i, int i1) {
-            return null;
-        }
+    private static boolean cancelPotentialDownload(News news, ImageView imageView) {
+        BitmapWorkerTask bitmapWorkerTask = getBitmapDownloaderTask(imageView);
 
-        // Once complete, see if ImageView is still around and set bitmap.
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (imageViewReference != null && bitmap != null) {
-                final ImageView imageView = imageViewReference.get();
-                if (imageView != null) {
-                    imageView.setImageBitmap(bitmap);
-                }
+        if (bitmapWorkerTask != null) {
+            News bitmapNews = bitmapWorkerTask.getNews();
+            if ((bitmapNews == null) || (!bitmapNews.equals(news))) {
+                bitmapWorkerTask.cancel(true);
+            } else {
+                // The same URL is already being downloaded.
+                return false;
             }
         }
+        return true;
     }
+
+    private static BitmapWorkerTask getBitmapDownloaderTask(ImageView imageView) {
+        if (imageView != null) {
+            Drawable drawable = imageView.getDrawable();
+            if (drawable instanceof WorkerDrawable) {
+                WorkerDrawable workerDrawable = (WorkerDrawable) drawable;
+                return workerDrawable.getBitmapDownloaderTask();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void onFinish(Bitmap bitmap, News news) {
+        mMemoryCache.put(news.getUrl(), bitmap);
+    }
+
+    static class WorkerDrawable extends BitmapDrawable {
+        private final WeakReference<BitmapWorkerTask> bitmapDownloaderTaskReference;
+
+        public WorkerDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
+            super(res, bitmap);
+            bitmapDownloaderTaskReference =
+                    new WeakReference<>(bitmapWorkerTask);
+        }
+
+        public BitmapWorkerTask getBitmapDownloaderTask() {
+            return bitmapDownloaderTaskReference.get();
+        }
+    }
+
 }
