@@ -1,7 +1,6 @@
 package com.example.demonews;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.demonews.cache.NewsImageCache;
 import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
 
 import java.util.ArrayList;
 
@@ -44,7 +42,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         final News news = mList.get(position);
         holder.mHeadline.setText(news.getTitle());
         holder.mPublisher.setText(news.getAuthor());
-        holder.mDate.setText(Util.convertIntDateToSewsAge(mContext, news.getTime()));
+        holder.mDate.setText(news.getNewsAgeString(mContext));
         mImageCache.loadBitmap(holder.mThumbnail, news);
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override

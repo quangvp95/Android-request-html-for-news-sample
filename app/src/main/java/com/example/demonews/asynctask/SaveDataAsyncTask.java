@@ -6,11 +6,17 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
 
 import java.util.ArrayList;
 
-import static com.example.demonews.db.NewsProvider.*;
+import static com.example.demonews.db.NewsProvider.CONTENT_URI;
+import static com.example.demonews.db.NewsProvider.KEY_AUTHOR;
+import static com.example.demonews.db.NewsProvider.KEY_ID;
+import static com.example.demonews.db.NewsProvider.KEY_IMG_URL;
+import static com.example.demonews.db.NewsProvider.KEY_TIME;
+import static com.example.demonews.db.NewsProvider.KEY_TITLE;
+import static com.example.demonews.db.NewsProvider.KEY_URL;
+import static com.example.demonews.db.NewsProvider.SELECTION_CLAUSE;
 
 public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
 
@@ -34,7 +40,7 @@ public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
             case INSERT:
                 for (News news : mList) {
                     ContentValues values = new ContentValues();
-                    values.put(KEY_ID, Util.getNewsId(news.getUrl()));
+                    values.put(KEY_ID, news.getNewsId());
                     values.put(KEY_TITLE, news.getTitle());
                     values.put(KEY_AUTHOR, news.getAuthor());
                     values.put(KEY_URL, news.getUrl());
@@ -50,12 +56,12 @@ public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
                     values.put(KEY_AUTHOR, news.getAuthor());
                     values.put(KEY_TIME, news.getTime());
                     values.put(KEY_IMG_URL, news.getImgUrl());
-                    mResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[] {String.valueOf(Util.getNewsId(news.getUrl()))});
+                    mResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[] {String.valueOf(news.getNewsId())});
                 }
                 break;
             case DELETE:
                 for (News news : mList) {
-                    mResolver.delete(CONTENT_URI, SELECTION_CLAUSE, new String[] {String.valueOf(Util.getNewsId(news.getUrl()))});
+                    mResolver.delete(CONTENT_URI, SELECTION_CLAUSE, new String[] {String.valueOf(news.getNewsId())});
                 }
                 break;
         }

@@ -1,19 +1,13 @@
 package com.example.demonews;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 import android.os.Bundle;
 import android.view.View;
 
-import com.example.demonews.asynctask.NewsFetcherAsyncTask;
-import com.example.demonews.entity.News;
-
-import java.util.ArrayList;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    ListNewsLayout mListNewsLayout;
+    private ListNewsLayout mListNewsLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -2,7 +2,6 @@ package com.example.demonews;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -14,7 +13,6 @@ import com.example.demonews.asynctask.NewsFetcherAsyncTask;
 import com.example.demonews.asynctask.SaveDataAsyncTask;
 import com.example.demonews.db.NewsProvider;
 import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +20,8 @@ import java.util.Collections;
 public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcher {
     private ArrayList<News> mList;
     private RecyclerView.Adapter mAdapter;
+
+    private NewsFetcherAsyncTask.INewFetcher mCallback;
 
     public NewsRecyclerView(@NonNull Context context) {
         super(context);
@@ -59,8 +59,6 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
 
         fetch();
     }
-
-    private NewsFetcherAsyncTask.INewFetcher mCallback;
 
     public void setNewsFetcherAsyncTaskCallback(NewsFetcherAsyncTask.INewFetcher mCallback) {
         this.mCallback = mCallback;

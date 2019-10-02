@@ -12,8 +12,8 @@ import android.widget.ImageView;
 
 import com.example.demonews.db.NewsProvider;
 import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -24,6 +24,9 @@ import static com.example.demonews.db.NewsProvider.CONTENT_URI;
 import static com.example.demonews.db.NewsProvider.KEY_IMAGE;
 import static com.example.demonews.db.NewsProvider.SELECTION_CLAUSE;
 
+/**
+ * QuangNHe: AsyncTask ứng với 1 ImageView, có nhiệm vụ lấy ảnh từ database hoặc request lên mạng
+ */
 public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
     public interface IBitmapWorker {
         void onFinish(Bitmap bitmap, News news);
@@ -32,7 +35,13 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
     private News mNews;
     private final WeakReference<ImageView> mImageViewReference;
     private ContentResolver mContentResolver;
-    private int mThumbnailWidth, mThumbnailHeight;
+
+    /**
+     * QuangNHe: kích thước view sẽ hiển thị ảnh
+     */
+    private int mThumbnailWidth;
+    private int mThumbnailHeight;
+
     private IBitmapWorker mCallback;
 
     public BitmapWorkerAsyncTask(IBitmapWorker callback, ImageView imageView, News news, int mThumbnailWidth, int mThumbnailHeight) {
@@ -45,12 +54,14 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
     }
 
     @Override
-    // Actual download method, run in the task thread
     protected Bitmap doInBackground(String... params) {
-        Cursor cursor = mContentResolver.query(NewsProvider.CONTENT_URI, null, SELECTION_CLAUSE, new String[]{String.valueOf(Util.getNewsId(mNews.getUrl()))}, null);
+        /*
+            QuangNHe: tìm trong database
+         */
+        Cursor cursor = mContentResolver.query(NewsProvider.CONTENT_URI, null, SELECTION_CLAUSE, new String[]{String.valueOf(mNews.getNewsId())}, null);
         if (cursor != null) {
             if (cursor.moveToFirst()) {
-                Bitmap bitmap = Util.getImage(cursor.getBlob(5));
+                Bitmap bitmap = getImage(cursor.getBlob(5));
                 if (bitmap != null) {
                     cursor.close();
                     return bitmap;
@@ -59,10 +70,15 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
             cursor.close();
         }
 
+        /*
+            QuangNhe: Nếu database không có thì request lên mạng
+         */
         Bitmap bitmap = downloadBitmap(mNews, mThumbnailWidth, mThumbnailHeight);
+        if (bitmap == null)
+            return null;
         ContentValues values = new ContentValues();
-        values.put(KEY_IMAGE, Util.getBytes(bitmap));
-        mContentResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[]{String.valueOf(Util.getNewsId(mNews.getUrl()))});
+        values.put(KEY_IMAGE, getBytes(bitmap));
+        mContentResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[]{String.valueOf(mNews.getNewsId())});
         return bitmap;
     }
 
@@ -78,8 +94,8 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
 
                 InputStream input = connection.getInputStream();
 
+                Bitmap bm = BitmapFactory.decodeStream(input);
                 if (preferHeight > 0 && preferWidth > 0) {
-                    Bitmap bm = BitmapFactory.decodeStream(input);
                     if (bm == null) {
                         System.out.println("QuangNHe onFetchImageFinish ERR bm == null " + news.getImgUrl());
                         return null;
@@ -87,9 +103,8 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
                     Bitmap myBitmap = getResizedBitmap(bm, preferHeight, preferWidth);
                     input.close();
                     return myBitmap;
-                } else {
-                    return BitmapFactory.decodeStream(input);
                 }
+                return bm;
             } catch (IOException e) {
                 System.out.println("QuangNHe onFetchImageFinish ERR " + news.getImgUrl());
                 e.printStackTrace();
@@ -105,21 +120,30 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
         float scaleHeight = ((float) newHeight) / height;
         float scale = Math.max(scaleWidth, scaleHeight);
 
-        // CREATE A MATRIX FOR THE MANIPULATION
         Matrix matrix = new Matrix();
-        // RESIZE THE BIT MAP
+        /*
+            QuangNHe: thiết lập độ scale theo chiều rộng và dài cho ảnh để hợp view
+         */
         matrix.postScale(scale, scale);
 
+        /*
+            QuangNHe: crop ảnh thì lấy trung tâm làm gốc, crop đều các cạnh
+         */
         int offsetX = (int) ((width * scale - newWidth) / 2);
         int offsetY = (int) ((height * scale - newHeight) / 2);
 
-        // "RECREATE" THE NEW BITMAP
+        /*
+            QuangNHe: chỉnh lại bitmap, scale về kích thước cần, crop các cạnh để vừa nội dung,
+            tránh làm ảnh bị co dãn
+         */
         return Bitmap.createBitmap(bm, offsetX, offsetY, width - offsetX * 2, height - offsetY * 2,
                 matrix, false);
     }
 
+    /**
+     * QuangNHe: Nếu lấy được bitmap thì cập nhât
+     */
     @Override
-    // Once the image is downloaded, associates it to the imageView
     protected void onPostExecute(Bitmap bitmap) {
         if (isCancelled()) {
             bitmap = null;
@@ -140,4 +164,17 @@ public class BitmapWorkerAsyncTask extends AsyncTask<String, Void, Bitmap> {
         return mNews;
     }
 
+    // convert from bitmap to byte array
+    private static byte[] getBytes(Bitmap bitmap) {
+        if (bitmap == null) return null;
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream);
+        return stream.toByteArray();
+    }
+
+    // convert from byte array to bitmap
+    private static Bitmap getImage(byte[] image) {
+        if (image == null) return null;
+        return BitmapFactory.decodeByteArray(image, 0, image.length);
+    }
 }

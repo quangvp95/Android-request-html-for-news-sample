@@ -1,21 +1,39 @@
 package com.example.demonews.entity;
 
+import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.example.demonews.util.Util;
+import com.example.demonews.R;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class News implements Comparable<News> {
+    private static final long MINUTES = 60 * 1000;
+    private static final long HOUR = 3600 * 1000;
+
+    private static final String MODULE_NEWS_MOBILE = "<div id='module-news-mobile-";
+    private static final String OTHER_NEWS_MOBILE_LEFT = "class='other-news-mobile-left-style";
+    private static final String MOBILE_ROW_2_LEFT = "class='mobile-row-2'";
+    private static final String MOBILE_COL_LEFT = "class='mobile-col";
+    private static final String MOBILE_NEW_BLOCK_LEFT = "class='mobile-new-block";
+    private static final String OTHER_NEWS_MOBILE_RIGHT = "class='other-news-mobile-right-style";
+    private static final String MOBILE_OTHER_COL = "class='mobile-other-col";
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ROOT);
+
+
     private String mTitle;
     private String mAuthor;
     /**
@@ -25,7 +43,7 @@ public class News implements Comparable<News> {
     private long mTime;
     private String mImgUrl;
 
-    public News(String paragraph) throws ParseException {
+    private News(String paragraph) throws ParseException {
         this.mUrl = getUrl(paragraph);
         this.mTitle = getTitle(paragraph);
         this.mAuthor = getAuthor(paragraph);
@@ -39,14 +57,6 @@ public class News implements Comparable<News> {
         this.mUrl = cursor.getString(2);
         this.mTime = cursor.getLong(3);
         this.mImgUrl = cursor.getString(4);
-    }
-
-    public News(String mTitle, String mAuthor, String mUrl, long mTime, String mImgUrl) {
-        this.mTitle = mTitle;
-        this.mAuthor = mAuthor;
-        this.mUrl = mUrl;
-        this.mTime = mTime;
-        this.mImgUrl = mImgUrl;
     }
 
     public String getTitle() {
@@ -69,10 +79,35 @@ public class News implements Comparable<News> {
         return mImgUrl;
     }
 
+    public long getNewsId() {
+        int hash = mUrl.hashCode();
+        return Math.abs(hash);
+    }
+
+    /**
+     * QuangNHe: Trả về thời gian từ lúc tin được xuất bản cho đến hiện tại để hiện trên UI
+     *
+     * @return VD: "2 giờ trước" hoặc "53 minutes ago"
+     */
+    public String getNewsAgeString(Context context) {
+        StringBuilder builder = new StringBuilder("| ");
+        Resources res = context.getResources();
+        Date date = new Date();
+        long offset = date.getTime() - mTime;
+        if (offset < HOUR) {
+            long minutes = offset / MINUTES;
+            if (minutes <= 0) minutes = 1;
+            builder.append(minutes).append(" ").append(res.getString(R.string.minutes));
+        } else {
+            long hour = offset / HOUR;
+            builder.append(hour).append(" ").append(res.getString(R.string.hours));
+        }
+        return builder.append(" ").append(res.getString(R.string.ago)).toString();
+    }
+
     /**
      * QuangNHe: Hỗ trợ việc so sánh để sắp xếp tin theo thứ tự từ mới nhất đến cũ nhất
      *
-     * @param news
      * @return 1 là tin cũ hơn
      * 0 là tin cùng thời gian
      * -1 là tin mới hơn
@@ -91,8 +126,6 @@ public class News implements Comparable<News> {
 
     /**
      * QuangNHe: không có gì đặc biệt, chỉ để nhìn tool debug cho dễ
-     *
-     * @return
      */
     @NonNull
     @Override
@@ -100,31 +133,22 @@ public class News implements Comparable<News> {
         return getTime() + " | " + getTitle();
     }
 
-    private static final String START_ARTICLE = "class='mobile-row";
-    private static final String MODULE_NEWS_MOBILE = "<div id='module-news-mobile-";
-    private static final String OTHER_NEWS_MOBILE_LEFT = "class='other-news-mobile-left-style";
-    private static final String MOBILE_ROW_2_LEFT = "class='mobile-row-2'";
-    private static final String MOBILE_COL_LEFT = "class='mobile-col";
-    private static final String MOBILE_NEW_BLOCK_LEFT = "class='mobile-new-block";
-    private static final String OTHER_NEWS_MOBILE_RIGHT = "class='other-news-mobile-right-style";
-    private static final String MOBILE_OTHER_COL = "class='mobile-other-col";
-
-    /*
-        MODULE_NEWS_MOBILE_LEFT
-            NEWS_MOBILE_RSS_LEFT
-                HEADER
-                MOBILE_ROW_2_LEFT
-                    MOBILE_COL_LEFT
+     /*
+        QuangNHe: Cấu trúc hiện tại của nội dung html:
+            MODULE_NEWS_MOBILE_LEFT
+                NEWS_MOBILE_RSS_LEFT
+                    HEADER
+                    MOBILE_ROW_2_LEFT
+                        MOBILE_COL_LEFT
+                        ...
+                OTHER_NEWS_MOBILE_LEFT
+                    MOBILE_NEW_BLOCK_LEFT
                     ...
-            OTHER_NEWS_MOBILE_LEFT
-                MOBILE_NEW_BLOCK_LEFT
+            MODULE_NEWS_MOBILE_RIGHT
+                OTHER_NEWS_MOBILE_RIGHT
+                    MOBILE_OTHER_COL
+                    ...
                 ...
-        MODULE_NEWS_MOBILE_RIGHT
-            OTHER_NEWS_MOBILE_RIGHT
-                MOBILE_OTHER_COL
-                ...
-            ...
-
      */
     public static ArrayList<News> processHtml(String html) {
         ArrayList<News> result = new ArrayList<>();
@@ -135,7 +159,7 @@ public class News implements Comparable<News> {
 
         String[] mobileNewsRssLeft = mobileNewsLeft[0].split(Pattern.quote(MOBILE_ROW_2_LEFT)); //= HEADER + MOBILE_ROW_2_LEFT
 
-        News header;
+        News header = null;
         try {
             header = new News(mobileNewsRssLeft[0]);
         } catch (ParseException e) {
@@ -176,44 +200,67 @@ public class News implements Comparable<News> {
             }
         }
 
-//            /*
-//                QuangNhe: 1 số trường hợp server trả về 2 tin trùng nhau
-//             */
-//        boolean isContain = false;
-//        for (News n : result)
-//            if (n.getUrl().equals(mUrl)) {
-//                isContain = true;
-//                break;
-//            }
-//        if (isContain) continue;
+        /*
+            QuangNhe: 1 số trường hợp server trả về 2 tin trùng nhau
+        */
+        for (int i = 0; i < (result.size() / 2 + 1); i++) {
+            for (int j = i + 1; j < result.size(); j++)
+                if (result.get(i).mUrl.equals(result.get(j).mUrl)) {
+                    result.remove(j);
+                    j--;
+                }
+        }
+
+        /*
+            QuangNHe: sắp xếp tin theo thời gian
+         */
+        Collections.sort(result);
+        /*
+            QuangNhe: thêm header vào đầu tin
+         */
+        if (header != null)
+            result.add(0, header);
 
         return result;
     }
 
-    private static String getTitle(String paragraph) {
-        return Util.getString(paragraph, "title='", "' href='");
+
+    private String getTitle(String paragraph) {
+        return getString(paragraph, "title='", "' href='");
     }
 
-    private static String getUrl(String paragraph) {
-        return Util.getString(paragraph, "href='", "'>");
+    private String getUrl(String paragraph) {
+        return getString(paragraph, "href='", "'>");
     }
 
-    private static String getTime(String paragraph) {
-        return Util.getString(paragraph, "class='date-publish'>", "<");
+    private String getTime(String paragraph) {
+        return getString(paragraph, "class='date-publish'>", "<");
     }
 
-    private static String getImageUrl(String paragraph) {
-        return Util.getString(paragraph, "background-image: url('", "')");
+    private String getImageUrl(String paragraph) {
+        return getString(paragraph, "background-image: url('", "')");
     }
 
-    private static String getAuthor(String paragraph) {
-        return Util.getString(paragraph, "\");'>", "</");
+    private String getAuthor(String paragraph) {
+        return getString(paragraph, "\");'>", "</");
     }
 
-    private static final SimpleDateFormat sTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ROOT);
+    private static String getString(String paragraph, String start, String end) {
+        String result = "";
+        if (TextUtils.isEmpty(paragraph)) return result;
 
-    private static long convertStringToDate(String dateString) throws ParseException {
-        Date date = sTime.parse(dateString);
+        int startIndex = paragraph.indexOf(start);
+        if (startIndex == -1) return result;
+
+        int endIndex = paragraph.indexOf(end, startIndex + start.length());
+        if (endIndex == -1) return result;
+
+        result = paragraph.substring(startIndex + start.length(), endIndex);
+        return result;
+    }
+
+    private long convertStringToDate(String dateString) throws ParseException {
+        Date date = SIMPLE_DATE_FORMAT.parse(dateString);
         return date.getTime();
     }
 

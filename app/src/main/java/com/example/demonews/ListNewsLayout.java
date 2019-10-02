@@ -2,7 +2,6 @@ package com.example.demonews;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,7 +13,7 @@ import com.example.demonews.entity.News;
 import java.util.ArrayList;
 
 public class ListNewsLayout extends SwipeRefreshLayout implements NewsFetcherAsyncTask.INewFetcher, SwipeRefreshLayout.OnRefreshListener {
-    NewsRecyclerView mRecyclerView;
+    private NewsRecyclerView mRecyclerView;
 
     public ListNewsLayout(@NonNull Context context) {
         super(context);

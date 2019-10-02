@@ -1,16 +1,8 @@
 package com.example.demonews.db;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Bitmap;
-
-import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
-
-import java.util.ArrayList;
 
 public class NewsDatabaseHelper extends SQLiteOpenHelper {
     /**
@@ -48,7 +40,7 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
             KEY_IMAGE + " BLOB," +
             KEY_ID + " INTEGER PRIMARY KEY);";
 
-    public NewsDatabaseHelper(Context context) {
+    NewsDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -59,5 +51,6 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // QuangNHe: Tạm thời không làm gì
     }
 }

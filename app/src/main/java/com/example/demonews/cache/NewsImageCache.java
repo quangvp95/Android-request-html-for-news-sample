@@ -16,13 +16,27 @@ import com.example.demonews.entity.News;
 import java.lang.ref.WeakReference;
 
 /**
- * https://stuff.mit.edu/afs/sipb/project/android/docs/training/displaying-bitmaps/process-bitmap.html#concurrency
+ * QuangNHe: Cache để lưu ảnh bitmap của các imageView trong adapter
+ * Các bước lấy ảnh:
+ *      B1: kiểm tra trong LruCache có không, có thì trả về
+ *      B2: kiểm tra imageView này có đang được đính kèm 1 worker nào đang lấy ảnh không
+ *          Nếu có thì kiểm tra worker này có đang lấy ảnh mình cần không, nếu phải thì để nguyên như cũ
+ *      B3: Nếu worker không phải thì hủy và tạo worker mới cho việc lấy ảnh, hiển thị ảnh mặc định
+ *          để đợi khi nào lấy được thì cập nhật ảnh mới
+ * Tài liệu:
+ *      - https://stuff.mit.edu/afs/sipb/project/android/docs/training/displaying-bitmaps/process-bitmap.html#concurrency
+ *      - https://developer.android.com/topic/performance/graphics/cache-bitmap#java
  */
 public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
     private LruCache<String, Bitmap> mMemoryCache;
     private Bitmap mDefaultBitmap;
     private Context mContext;
-    private int mThumbnailWidth, mThumbnailHeight;
+
+    /**
+     * QuangNHe: kích thước view sẽ hiển thị ảnh
+     */
+    private int mThumbnailWidth;
+    private int mThumbnailHeight;
 
     public NewsImageCache(Context context) {
         // Get max available VM memory, exceeding this amount will throw an
@@ -101,16 +115,16 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
     }
 
     static class WorkerDrawable extends BitmapDrawable {
-        private final WeakReference<BitmapWorkerAsyncTask> bitmapDownloaderTaskReference;
+        private final WeakReference<BitmapWorkerAsyncTask> mBitmapDownloaderTaskReference;
 
         WorkerDrawable(Resources res, Bitmap bitmap, BitmapWorkerAsyncTask bitmapWorkerAsynctask) {
             super(res, bitmap);
-            bitmapDownloaderTaskReference =
+            mBitmapDownloaderTaskReference =
                     new WeakReference<>(bitmapWorkerAsynctask);
         }
 
-        public BitmapWorkerAsyncTask getBitmapDownloaderTask() {
-            return bitmapDownloaderTaskReference.get();
+        BitmapWorkerAsyncTask getBitmapDownloaderTask() {
+            return mBitmapDownloaderTaskReference.get();
         }
     }
 

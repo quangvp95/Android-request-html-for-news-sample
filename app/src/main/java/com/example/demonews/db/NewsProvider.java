@@ -30,6 +30,11 @@ public class NewsProvider extends ContentProvider {
     public static final int NEWS = 100;
     public static final int NEWS_ID = 110;
 
+    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE
+            + "/com.example.demonews";
+    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE
+            + "/com.example.demonews";
+
     private static final String NEWS_BASE_PATH = "news";
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
@@ -98,9 +103,9 @@ public class NewsProvider extends ContentProvider {
           If record is added successfully
          */
         if (rowID > 0) {
-            Uri _uri = ContentUris.withAppendedId(CONTENT_URI, rowID);
-            Objects.requireNonNull(getContext()).getContentResolver().notifyChange(_uri, null);
-            return _uri;
+            Uri uriAppendedId = ContentUris.withAppendedId(CONTENT_URI, rowID);
+            Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uriAppendedId, null);
+            return uriAppendedId;
         }
 
         throw new SQLException("Failed to add a record into " + uri);
@@ -149,11 +154,6 @@ public class NewsProvider extends ContentProvider {
         Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
         return count;
     }
-
-    public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE
-            + "/com.example.demonews";
-    public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE
-            + "/com.example.demonews";
 
     @Override
     public String getType(@NotNull Uri uri) {
