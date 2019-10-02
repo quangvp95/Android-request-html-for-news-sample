@@ -15,7 +15,7 @@ import static com.example.demonews.db.NewsProvider.*;
 public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
 
     public enum TYPE {
-        INSERT, UPDATE_INFO, UPDATE_IMG, DELETE
+        INSERT, UPDATE_INFO, DELETE
     }
 
     private ContentResolver mResolver;
@@ -50,13 +50,6 @@ public class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
                     values.put(KEY_AUTHOR, news.getAuthor());
                     values.put(KEY_TIME, news.getTime());
                     values.put(KEY_IMG_URL, news.getImgUrl());
-                    mResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[] {String.valueOf(Util.getNewsId(news.getUrl()))});
-                }
-                break;
-            case UPDATE_IMG:
-                for (News news : mList) {
-                    ContentValues values = new ContentValues();
-                    values.put(KEY_IMAGE, Util.getBytes(news.getImage()));
                     mResolver.update(CONTENT_URI, values, SELECTION_CLAUSE, new String[] {String.valueOf(Util.getNewsId(news.getUrl()))});
                 }
                 break;

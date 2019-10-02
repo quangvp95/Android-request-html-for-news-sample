@@ -3,5 +3,6 @@
     <string name="ago" translatable="false">ago</string>
     <string name="minutes" translatable="false">minutes</string>
     <string name="hours" translatable="false">hours</string>
+    <string name="fetch_news">Fetch News!</string>
 
 </resources>

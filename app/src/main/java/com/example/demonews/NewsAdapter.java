@@ -1,10 +1,7 @@
 package com.example.demonews;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,19 +18,16 @@ import com.example.demonews.entity.News;
 import com.example.demonews.util.Util;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
 
     private Context mContext;
     private ArrayList<News> mList;
-    private Drawable mDefaultThumbnail;
     private NewsImageCache mImageCache;
 
     NewsAdapter(Context context, ArrayList<News> mList) {
         mContext = context;
         this.mList = mList;
-        mDefaultThumbnail = context.getResources().getDrawable(R.drawable.home_vn, null);
         mImageCache = new NewsImageCache(context);
     }
 
@@ -50,15 +44,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         final News news = mList.get(position);
         holder.mHeadline.setText(news.getTitle());
         holder.mPublisher.setText(news.getAuthor());
-        holder.mDate.setText(Util.convertIntDateToString(mContext, news.getTime()));
-        if (NewsRecyclerView.USE_GOOGLE_CACHE_IMG_GUIDE) {
-            mImageCache.loadBitmap(holder.mThumbnail, news);
-        } else {
-            if (news.getImage() != null)
-                holder.mThumbnail.setImageBitmap(news.getImage());
-            else
-                holder.mThumbnail.setImageDrawable(mDefaultThumbnail);
-        }
+        holder.mDate.setText(Util.convertIntDateToSewsAge(mContext, news.getTime()));
+        mImageCache.loadBitmap(holder.mThumbnail, news);
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

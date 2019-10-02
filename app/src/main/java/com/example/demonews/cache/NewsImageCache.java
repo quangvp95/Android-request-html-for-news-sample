@@ -1,35 +1,24 @@
 package com.example.demonews.cache;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.util.LruCache;
 import android.widget.ImageView;
 
 import com.example.demonews.R;
-import com.example.demonews.asynctask.BitmapWorkerTask;
-import com.example.demonews.asynctask.SaveDataAsyncTask;
-import com.example.demonews.db.NewsProvider;
+import com.example.demonews.asynctask.BitmapWorkerAsyncTask;
 import com.example.demonews.entity.News;
-import com.example.demonews.util.Util;
 
 import java.lang.ref.WeakReference;
-
-import static android.os.Environment.isExternalStorageRemovable;
-import static com.example.demonews.db.NewsProvider.CONTENT_URI;
-import static com.example.demonews.db.NewsProvider.KEY_IMAGE;
-import static com.example.demonews.db.NewsProvider.SELECTION_CLAUSE;
 
 /**
  * https://stuff.mit.edu/afs/sipb/project/android/docs/training/displaying-bitmaps/process-bitmap.html#concurrency
  */
-public class NewsImageCache implements BitmapWorkerTask.IBitmapWorker {
+public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
     private LruCache<String, Bitmap> mMemoryCache;
     private Bitmap mDefaultBitmap;
     private Context mContext;
@@ -74,19 +63,19 @@ public class NewsImageCache implements BitmapWorkerTask.IBitmapWorker {
         }
 
         if (cancelPotentialDownload(news, imageView)) {
-            BitmapWorkerTask task = new BitmapWorkerTask(this, imageView, news, mThumbnailWidth, mThumbnailHeight);
+            BitmapWorkerAsyncTask task = new BitmapWorkerAsyncTask(this, imageView, news, mThumbnailWidth, mThumbnailHeight);
             imageView.setImageDrawable(new WorkerDrawable(mContext.getResources(), mDefaultBitmap, task));
             task.execute();
         }
     }
 
     private static boolean cancelPotentialDownload(News news, ImageView imageView) {
-        BitmapWorkerTask bitmapWorkerTask = getBitmapDownloaderTask(imageView);
+        BitmapWorkerAsyncTask bitmapWorkerAsynctask = getBitmapDownloaderTask(imageView);
 
-        if (bitmapWorkerTask != null) {
-            News bitmapNews = bitmapWorkerTask.getNews();
+        if (bitmapWorkerAsynctask != null) {
+            News bitmapNews = bitmapWorkerAsynctask.getNews();
             if ((bitmapNews == null) || (!bitmapNews.equals(news))) {
-                bitmapWorkerTask.cancel(true);
+                bitmapWorkerAsynctask.cancel(true);
             } else {
                 // The same URL is already being downloaded.
                 return false;
@@ -95,7 +84,7 @@ public class NewsImageCache implements BitmapWorkerTask.IBitmapWorker {
         return true;
     }
 
-    private static BitmapWorkerTask getBitmapDownloaderTask(ImageView imageView) {
+    private static BitmapWorkerAsyncTask getBitmapDownloaderTask(ImageView imageView) {
         if (imageView != null) {
             Drawable drawable = imageView.getDrawable();
             if (drawable instanceof WorkerDrawable) {
@@ -112,15 +101,15 @@ public class NewsImageCache implements BitmapWorkerTask.IBitmapWorker {
     }
 
     static class WorkerDrawable extends BitmapDrawable {
-        private final WeakReference<BitmapWorkerTask> bitmapDownloaderTaskReference;
+        private final WeakReference<BitmapWorkerAsyncTask> bitmapDownloaderTaskReference;
 
-        public WorkerDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
+        WorkerDrawable(Resources res, Bitmap bitmap, BitmapWorkerAsyncTask bitmapWorkerAsynctask) {
             super(res, bitmap);
             bitmapDownloaderTaskReference =
-                    new WeakReference<>(bitmapWorkerTask);
+                    new WeakReference<>(bitmapWorkerAsynctask);
         }
 
-        public BitmapWorkerTask getBitmapDownloaderTask() {
+        public BitmapWorkerAsyncTask getBitmapDownloaderTask() {
             return bitmapDownloaderTaskReference.get();
         }
     }

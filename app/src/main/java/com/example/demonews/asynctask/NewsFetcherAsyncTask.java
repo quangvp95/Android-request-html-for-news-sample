@@ -13,13 +13,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>> {
     public interface INewFetcher {
         void onFetchNewsFinish(ArrayList<News> news);
     }
 
-    private static String HOST = "http://m.home.vn/web/guest/danh-sach-tin-tuc/-/category/newsMobile";
+    private static final String HOST = "http://m.home.vn/web/guest/danh-sach-tin-tuc/-/category/newsMobile";
+
+    private static final int TIME_OUT = 5000;
 
     private INewFetcher mCallback;
 
@@ -34,8 +37,8 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
 
         try {
             URLConnection connection = (new URL(HOST)).openConnection();
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(TIME_OUT);
+            connection.setReadTimeout(TIME_OUT);
             connection.connect();
 
             InputStream in = connection.getInputStream();
@@ -48,23 +51,35 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
             e.printStackTrace();
             return result;
         }
-        String[] splits = html.toString().split(START_ARTICLE);
-        for (String i : splits) {
-            String mTitle = getTitle(i);
-            String mAuthor = getAuthor(i);
-            String mUrl = getUrl(i);
-            long mTime;
-            try {
-                mTime = Util.convertStringToDate(getTime(i));
-            } catch (ParseException e) {
-                e.printStackTrace();
-                continue;
-            }
-            String mImgUrl = getImageUrl(i);
-
-            News news = new News(mTitle, mAuthor, mUrl, mTime, mImgUrl);
-            result.add(news);
-        }
+        News.processHtml(html.toString());
+//        String[] splits = html.toString().split(Pattern.quote(START_ARTICLE));
+//        for (String i : splits) {
+//            String mUrl = getUrl(i);
+//            /*
+//                QuangNhe: 1 số trường hợp server trả về 2 tin trùng nhau
+//             */
+//            boolean isContain = false;
+//            for (News n : result)
+//                if (n.getUrl().equals(mUrl)) {
+//                    isContain = true;
+//                    break;
+//                }
+//            if (isContain) continue;
+//
+//            String mTitle = getTitle(i);
+//            String mAuthor = getAuthor(i);
+//            long mTime;
+//            try {
+//                mTime = Util.convertStringToDate(getTime(i));
+//            } catch (ParseException e) {
+//                e.printStackTrace();
+//                continue;
+//            }
+//            String mImgUrl = getImageUrl(i);
+//
+//            News news = new News(mTitle, mAuthor, mUrl, mTime, mImgUrl);
+//            result.add(news);
+//        }
 
         return result;
     }
@@ -73,26 +88,4 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
     protected void onPostExecute(ArrayList<News> news) {
         mCallback.onFetchNewsFinish(news);
     }
-
-    private static String START_ARTICLE = "class='mobile-row";
-    private static String getTitle(String paragraph) {
-        return Util.getString(paragraph, "title='", "' href='");
-    }
-
-    private static String getUrl(String paragraph) {
-        return Util.getString(paragraph, "href='", "'>");
-    }
-
-    private static String getTime(String paragraph) {
-        return Util.getString(paragraph, "class='date-publish'>", "<");
-    }
-
-    private static String getImageUrl(String paragraph) {
-        return Util.getString(paragraph, "background-image: url('", "')");
-    }
-
-    private static String getAuthor(String paragraph) {
-        return Util.getString(paragraph, "\");'>", "</");
-    }
-
 }

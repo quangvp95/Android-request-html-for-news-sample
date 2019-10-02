@@ -11,9 +11,8 @@ import com.example.demonews.entity.News;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, NewsFetcherAsyncTask.INewFetcher {
+public class MainActivity extends AppCompatActivity {
 
-    NewsRecyclerView mNewsRecyclerView;
     ListNewsLayout mListNewsLayout;
 
     @Override
@@ -21,24 +20,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mNewsRecyclerView = findViewById(R.id.news_recycler);
-
         mListNewsLayout = findViewById(R.id.list_news);
-        mListNewsLayout.setOnRefreshListener(this);
     }
 
     public void fetch(View view) {
-        mNewsRecyclerView.fetch(this);
-    }
-
-    @Override
-    public void onRefresh() {
-        mNewsRecyclerView.fetch(this);
-    }
-
-
-    @Override
-    public void onFetchNewsFinish(ArrayList<News> news) {
-        mListNewsLayout.setRefreshing(false);
+        mListNewsLayout.fetch();
     }
 }

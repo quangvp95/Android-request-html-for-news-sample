@@ -59,10 +59,5 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // on upgrade drop older tables
-        db.execSQL("DROP TABLE IF EXISTS " + DB_TABLE);
-
-        // create new table
-        onCreate(db);
     }
 }
