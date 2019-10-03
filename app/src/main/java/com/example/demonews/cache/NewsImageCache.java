@@ -69,6 +69,9 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
 
     }
 
+    /**
+     * QuangNHe: Hàm load ảnh hoặc tạo worker lấy ảnh
+     */
     public void loadBitmap(ImageView imageView, News news) {
         Bitmap result = mMemoryCache.get(news.getUrl());
         if (result != null) {
@@ -83,6 +86,9 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
         }
     }
 
+    /**
+     * QuangNhe: Check imageView có link worker load ảnh cần không
+     */
     private static boolean cancelPotentialDownload(News news, ImageView imageView) {
         BitmapWorkerAsyncTask bitmapWorkerAsynctask = getBitmapDownloaderTask(imageView);
 
@@ -114,6 +120,9 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
         mMemoryCache.put(news.getUrl(), bitmap);
     }
 
+    /**
+     * QuangNHe: Lớp Drawable làm holder để đợi image được load
+     */
     static class WorkerDrawable extends BitmapDrawable {
         private final WeakReference<BitmapWorkerAsyncTask> mBitmapDownloaderTaskReference;
 

@@ -31,8 +31,9 @@ public class News implements Comparable<News> {
     private static final String OTHER_NEWS_MOBILE_RIGHT = "class='other-news-mobile-right-style";
     private static final String MOBILE_OTHER_COL = "class='mobile-other-col";
 
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ROOT);
+    public static final String HEADER = "HEADER-";
 
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ROOT);
 
     private String mTitle;
     private String mAuthor;
@@ -79,6 +80,10 @@ public class News implements Comparable<News> {
         return mImgUrl;
     }
 
+    /**
+     * QuangNhe: Id được hash từ url để dùng cho provider
+     * @return
+     */
     public long getNewsId() {
         int hash = mUrl.hashCode();
         return Math.abs(hash);
@@ -133,22 +138,29 @@ public class News implements Comparable<News> {
         return getTime() + " | " + getTitle();
     }
 
-     /*
-        QuangNHe: Cấu trúc hiện tại của nội dung html:
-            MODULE_NEWS_MOBILE_LEFT
-                NEWS_MOBILE_RSS_LEFT
-                    HEADER
-                    MOBILE_ROW_2_LEFT
-                        MOBILE_COL_LEFT
-                        ...
-                OTHER_NEWS_MOBILE_LEFT
-                    MOBILE_NEW_BLOCK_LEFT
-                    ...
-            MODULE_NEWS_MOBILE_RIGHT
-                OTHER_NEWS_MOBILE_RIGHT
-                    MOBILE_OTHER_COL
-                    ...
-                ...
+    /*
+    */
+
+    /**
+     * QuangNhe: Hàm tách nội dung html thành tin, Hàm này phụ thuộc cấu trúc html lấy được về
+     *           nên cần cập nhật khi html thay đổi
+     * Cấu trúc hiện tại của nội dung html:
+     *             MODULE_NEWS_MOBILE_LEFT
+     *                 NEWS_MOBILE_RSS_LEFT
+     *                     HEADER
+     *                     MOBILE_ROW_2_LEFT
+     *                         MOBILE_COL_LEFT
+     *                         ...
+     *                 OTHER_NEWS_MOBILE_LEFT
+     *                     MOBILE_NEW_BLOCK_LEFT
+     *                     ...
+     *             MODULE_NEWS_MOBILE_RIGHT
+     *                 OTHER_NEWS_MOBILE_RIGHT
+     *                     MOBILE_OTHER_COL
+     *                     ...
+     *                 ...
+     * @param html
+     * @return
      */
     public static ArrayList<News> processHtml(String html) {
         ArrayList<News> result = new ArrayList<>();
@@ -162,6 +174,7 @@ public class News implements Comparable<News> {
         News header = null;
         try {
             header = new News(mobileNewsRssLeft[0]);
+            header.mTitle = HEADER + header.mTitle;
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -245,6 +258,13 @@ public class News implements Comparable<News> {
         return getString(paragraph, "\");'>", "</");
     }
 
+    /**
+     * QuangNHe: Lấy nội dung giữa đoạn start và end trong xâu
+     * @param paragraph
+     * @param start
+     * @param end
+     * @return
+     */
     private static String getString(String paragraph, String start, String end) {
         String result = "";
         if (TextUtils.isEmpty(paragraph)) return result;

@@ -58,7 +58,6 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     }
 
     static class NewsViewHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
         View mView;
         ImageView mThumbnail;
         TextView mHeadline;

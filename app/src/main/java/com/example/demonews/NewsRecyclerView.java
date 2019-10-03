@@ -3,6 +3,7 @@ package com.example.demonews;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -14,14 +15,25 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.demonews.asynctask.NewsFetcherAsyncTask;
-import com.example.demonews.asynctask.SaveDataAsyncTask;
 import com.example.demonews.db.NewsProvider;
 import com.example.demonews.entity.News;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcher, LoaderManager.LoaderCallbacks<Cursor> {
+/**
+ * QuangNHe
+ * <p>
+ * <p>
+ * notify loader --> update UI
+ * init loader --+--> get News from db --> update UI                     ^
+ * |                                                       |
+ * v                                                       |
+ * fetch News --> convert Html to News --> delete db --> update new db
+ */
+public class NewsRecyclerView extends RecyclerView implements LoaderManager.LoaderCallbacks<Cursor> {
     private ArrayList<News> mList;
     private RecyclerView.Adapter mAdapter;
 
@@ -46,26 +58,15 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
         setAdapter(mAdapter);
     }
 
-    public void setLoaderManager(LoaderManager supportLoaderManager) {
+    /**
+     * QuangNhe: Tạo loader để load và đăng kí observer database, đồng thời fetch dữ liệu từ server
+     */
+    public void setLoaderManager(LoaderManager supportLoaderManager, long lastTimeRequest) {
         supportLoaderManager.initLoader(0, null, this);
-    }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-//        Cursor cursor = getContext().getContentResolver().query(NewsProvider.CONTENT_URI,null, null, null, null);
-//        if (cursor != null) {
-//            mList.clear();
-//            if (cursor.moveToFirst()) {
-//                do {
-//                    News news = new News(cursor);
-//                    mList.add(news);
-//                } while (cursor.moveToNext());
-//            }
-//            cursor.close();
-//        }
-//
-//        fetch();
+        // QuangNHe: Nếu lần cuối request cách đây 1 giờ thì request lại
+        if ((System.currentTimeMillis() - lastTimeRequest) > 3600 * 1000)
+            fetch();
     }
 
     public void setNewsFetcherAsyncTaskCallback(NewsFetcherAsyncTask.INewFetcher mCallback) {
@@ -73,72 +74,41 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
     }
 
     public void fetch() {
-        new NewsFetcherAsyncTask(getContext(), this).execute();
-    }
-
-    @Override
-    public void onFetchNewsFinish(ArrayList<News> listNews) {
-        if (listNews.isEmpty()) return;
-        ArrayList<News> listForUpdate = new ArrayList<>(),
-                listForInsert = new ArrayList<>(),
-                listForDelete = new ArrayList<>(mList);
-        for (News news : listNews) {
-            boolean isOld = false;
-            for (int i = 0; i < mList.size(); i++) {
-                News oldNews = mList.get(i);
-                if (news.getUrl().equals(oldNews.getUrl())) {
-                    // QuangNHe: mList sẽ lấy tất cả obj mới -> cần lưu ảnh của các obj cũ để tái sử dụng
-                    // Các thông tin khác thì không cần lưu để update lại database
-                    isOld = true;
-                    listForUpdate.add(news);
-                    listForDelete.remove(oldNews);
-                    break;
-                }
-            }
-            if (!isOld) {
-                listForInsert.add(news);
-            }
-        }
-        mList.clear();
-        mList.addAll(listNews);
-
-        Collections.sort(mList);
-
-        mAdapter.notifyDataSetChanged();
-
-        if (mCallback != null)
-            mCallback.onFetchNewsFinish(listNews);
-        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.INSERT, listForInsert).execute();
-        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.UPDATE_INFO, listForUpdate).execute();
-        new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.DELETE, listForDelete).execute();
+        new NewsFetcherAsyncTask(getContext(), mCallback).execute();
     }
 
     @NonNull
     @Override
     public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-        return new CursorLoader(getContext(),NewsProvider.CONTENT_URI,null, null, null, null);
+        // QuangNHe: Query tất cả các tin trong database
+        return new CursorLoader(getContext(), NewsProvider.CONTENT_URI, null, null, null, null);
     }
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
-        mList.clear();
         if (cursor != null) {
-            mList.clear();
             if (cursor.moveToFirst()) {
+                mList.clear();
+                News header = null;
                 do {
                     News news = new News(cursor);
+                    if (!TextUtils.isEmpty(news.getTitle()) && news.getTitle().startsWith(News.HEADER)) {
+                        header = news;
+                        continue;
+                    }
                     mList.add(news);
                 } while (cursor.moveToNext());
+
+                Collections.sort(mList);
+                if (header != null)
+                    mList.add(0, header);
             }
-            cursor.close();
         }
         mAdapter.notifyDataSetChanged();
-
-        fetch();
     }
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-
+        System.out.println("");
     }
 }

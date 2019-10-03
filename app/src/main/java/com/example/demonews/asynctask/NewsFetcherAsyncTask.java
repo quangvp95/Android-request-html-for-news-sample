@@ -63,7 +63,13 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
             e.printStackTrace();
             return new ArrayList<>();
         }
-        ArrayList<News> mList = News.processHtml(html.toString());
+        ArrayList<News> mList;
+        try {
+            mList = News.processHtml(html.toString());
+        } catch (Exception e) {
+            System.out.println("QuangNhe: Cấu trúc HTML thay đổi");
+            return new ArrayList<>();
+        }
         mResolver.delete(CONTENT_URI, null, null);
         ContentValues[] values = new ContentValues[mList.size()];
         for (int i = 0; i < mList.size(); i++) {
@@ -84,6 +90,7 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
 
     @Override
     protected void onPostExecute(ArrayList<News> news) {
-//        mCallback.onFetchNewsFinish(news);
+        if (mCallback != null)
+            mCallback.onFetchNewsFinish(news);
     }
 }

@@ -39,7 +39,7 @@ public class NewsProvider extends ContentProvider {
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
             + "/" + NEWS_BASE_PATH);
-    public static final String SELECTION_CLAUSE = KEY_ID +  " = ?";
+    public static final String SELECTION_CLAUSE = KEY_ID + " = ?";
 
     private static final UriMatcher sURIMatcher = new UriMatcher(
             UriMatcher.NO_MATCH);
@@ -76,17 +76,10 @@ public class NewsProvider extends ContentProvider {
             default:
         }
 
-        if (TextUtils.isEmpty(sortOrder)) {
-            /*
-              By default sort on student names
-             */
-            sortOrder = KEY_TIME;
-        }
-
         Cursor cursor = qb.query(mDBHelper.getReadableDatabase(), projection, selection,
                 selectionArgs, null, null, sortOrder);
         /*
-          register to watch a content URI for changes
+          QuangNHe: Cập nhật uri
          */
         cursor.setNotificationUri(Objects.requireNonNull(getContext()).getContentResolver(), uri);
         return cursor;
@@ -147,7 +140,8 @@ public class NewsProvider extends ContentProvider {
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
-        Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
+        // QuangNhe: không thông báo khi delete vì không cần thiết theo luồng hiện tại
+        // Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
 
         return count;
     }
@@ -169,7 +163,8 @@ public class NewsProvider extends ContentProvider {
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
-        Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
+        // QuangNhe: không thông báo khi update vì luồng này chỉ dùng để lưu image, image cập nhật được lấy ra từ cache
+        // Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
         return count;
     }
 
