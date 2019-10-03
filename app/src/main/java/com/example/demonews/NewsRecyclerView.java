@@ -2,10 +2,14 @@ package com.example.demonews;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +21,7 @@ import com.example.demonews.entity.News;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcher {
+public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTask.INewFetcher, LoaderManager.LoaderCallbacks<Cursor> {
     private ArrayList<News> mList;
     private RecyclerView.Adapter mAdapter;
 
@@ -42,22 +46,26 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
         setAdapter(mAdapter);
     }
 
+    public void setLoaderManager(LoaderManager supportLoaderManager) {
+        supportLoaderManager.initLoader(0, null, this);
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        Cursor cursor = getContext().getContentResolver().query(NewsProvider.CONTENT_URI,null, null, null, null);
-        if (cursor != null) {
-            mList.clear();
-            if (cursor.moveToFirst()) {
-                do {
-                    News news = new News(cursor);
-                    mList.add(news);
-                } while (cursor.moveToNext());
-            }
-            cursor.close();
-        }
-
-        fetch();
+//        Cursor cursor = getContext().getContentResolver().query(NewsProvider.CONTENT_URI,null, null, null, null);
+//        if (cursor != null) {
+//            mList.clear();
+//            if (cursor.moveToFirst()) {
+//                do {
+//                    News news = new News(cursor);
+//                    mList.add(news);
+//                } while (cursor.moveToNext());
+//            }
+//            cursor.close();
+//        }
+//
+//        fetch();
     }
 
     public void setNewsFetcherAsyncTaskCallback(NewsFetcherAsyncTask.INewFetcher mCallback) {
@@ -65,7 +73,7 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
     }
 
     public void fetch() {
-        new NewsFetcherAsyncTask(this).execute();
+        new NewsFetcherAsyncTask(getContext(), this).execute();
     }
 
     @Override
@@ -103,5 +111,34 @@ public class NewsRecyclerView extends RecyclerView implements NewsFetcherAsyncTa
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.INSERT, listForInsert).execute();
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.UPDATE_INFO, listForUpdate).execute();
         new SaveDataAsyncTask(getContext(), SaveDataAsyncTask.TYPE.DELETE, listForDelete).execute();
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+        return new CursorLoader(getContext(),NewsProvider.CONTENT_URI,null, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
+        mList.clear();
+        if (cursor != null) {
+            mList.clear();
+            if (cursor.moveToFirst()) {
+                do {
+                    News news = new News(cursor);
+                    mList.add(news);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+        mAdapter.notifyDataSetChanged();
+
+        fetch();
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
     }
 }

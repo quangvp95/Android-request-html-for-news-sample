@@ -93,6 +93,24 @@ public class NewsProvider extends ContentProvider {
     }
 
     @Override
+    public int bulkInsert(@NotNull Uri uri, @NotNull ContentValues[] values) {
+        mDatabase.beginTransaction();
+        try {
+            for (ContentValues cv : values) {
+                long newID = mDatabase.insertWithOnConflict(NewsDatabaseHelper.DB_TABLE, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+                if (newID <= 0) {
+                    throw new SQLException("Failed to insert row into " + uri);
+                }
+            }
+            mDatabase.setTransactionSuccessful();
+            Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
+        } finally {
+            mDatabase.endTransaction();
+        }
+        return values.length;
+    }
+
+    @Override
     public Uri insert(@NotNull Uri uri, ContentValues values) {
         /*
           Add a new student record

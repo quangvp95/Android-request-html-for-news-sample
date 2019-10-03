@@ -1,5 +1,8 @@
 package com.example.demonews.asynctask;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.os.AsyncTask;
 
 import com.example.demonews.entity.News;
@@ -11,6 +14,14 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+
+import static com.example.demonews.db.NewsProvider.CONTENT_URI;
+import static com.example.demonews.db.NewsProvider.KEY_AUTHOR;
+import static com.example.demonews.db.NewsProvider.KEY_ID;
+import static com.example.demonews.db.NewsProvider.KEY_IMG_URL;
+import static com.example.demonews.db.NewsProvider.KEY_TIME;
+import static com.example.demonews.db.NewsProvider.KEY_TITLE;
+import static com.example.demonews.db.NewsProvider.KEY_URL;
 
 /**
  * QuangNHe: AsyncTask để lấy tin
@@ -25,9 +36,11 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
     private static final int TIME_OUT = 5000;
 
     private INewFetcher mCallback;
+    private ContentResolver mResolver;
 
-    public NewsFetcherAsyncTask(INewFetcher callback) {
+    public NewsFetcherAsyncTask(Context context, INewFetcher callback) {
         mCallback = callback;
+        mResolver = context.getContentResolver();
     }
 
     @Override
@@ -50,11 +63,27 @@ public class NewsFetcherAsyncTask extends AsyncTask<Void, Void, ArrayList<News>>
             e.printStackTrace();
             return new ArrayList<>();
         }
-        return News.processHtml(html.toString());
+        ArrayList<News> mList = News.processHtml(html.toString());
+        mResolver.delete(CONTENT_URI, null, null);
+        ContentValues[] values = new ContentValues[mList.size()];
+        for (int i = 0; i < mList.size(); i++) {
+            News news = mList.get(i);
+            ContentValues value = new ContentValues();
+            value.put(KEY_ID, news.getNewsId());
+            value.put(KEY_TITLE, news.getTitle());
+            value.put(KEY_AUTHOR, news.getAuthor());
+            value.put(KEY_URL, news.getUrl());
+            value.put(KEY_TIME, news.getTime());
+            value.put(KEY_IMG_URL, news.getImgUrl());
+            values[i] = value;
+        }
+        mResolver.bulkInsert(CONTENT_URI, values);
+
+        return mList;
     }
 
     @Override
     protected void onPostExecute(ArrayList<News> news) {
-        mCallback.onFetchNewsFinish(news);
+//        mCallback.onFetchNewsFinish(news);
     }
 }
