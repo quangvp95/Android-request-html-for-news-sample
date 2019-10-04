@@ -50,6 +50,7 @@ public class NewsRecyclerView extends RecyclerView implements LoaderManager.Load
     }
 
     private void init() {
+        setId(R.id.news_recycler_view);
         mList = new ArrayList<>();
         LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
@@ -61,7 +62,7 @@ public class NewsRecyclerView extends RecyclerView implements LoaderManager.Load
     /**
      * QuangNhe: Tạo loader để load và đăng kí observer database, đồng thời fetch dữ liệu từ server
      */
-    public void setLoaderManager(LoaderManager supportLoaderManager, long lastTimeRequest) {
+    public void initLoader(LoaderManager supportLoaderManager, long lastTimeRequest) {
         supportLoaderManager.initLoader(0, null, this);
 
         // QuangNHe: Nếu lần cuối request cách đây 1 giờ thì request lại
@@ -94,6 +95,7 @@ public class NewsRecyclerView extends RecyclerView implements LoaderManager.Load
                     News news = new News(cursor);
                     if (!TextUtils.isEmpty(news.getTitle()) && news.getTitle().startsWith(News.HEADER)) {
                         header = news;
+                        header.setTitle(header.getTitle().substring(News.HEADER.length()));
                         continue;
                     }
                     mList.add(news);
@@ -108,7 +110,5 @@ public class NewsRecyclerView extends RecyclerView implements LoaderManager.Load
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-        System.out.println("");
-    }
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {}
 }

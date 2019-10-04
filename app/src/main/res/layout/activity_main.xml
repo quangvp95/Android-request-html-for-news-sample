@@ -19,7 +19,7 @@
         app:layout_constraintRight_toRightOf="parent" />
 
     <com.example.demonews.ListNewsLayout
-        android:id="@+id/list_news"
+        android:id="@+id/list_news_layout"
         android:layout_width="match_parent"
         android:layout_height="500dp"
         app:layout_constraintBottom_toTopOf="@+id/button"

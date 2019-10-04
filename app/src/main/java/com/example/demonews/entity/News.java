@@ -242,6 +242,10 @@ public class News implements Comparable<News> {
         return getString(paragraph, "title='", "' href='");
     }
 
+    public void setTitle(String mTitle) {
+        this.mTitle = mTitle;
+    }
+
     private String getUrl(String paragraph) {
         return getString(paragraph, "href='", "'>");
     }

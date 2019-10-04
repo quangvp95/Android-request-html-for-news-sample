@@ -29,6 +29,7 @@ import java.lang.ref.WeakReference;
  */
 public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
     private LruCache<String, Bitmap> mMemoryCache;
+    private BitmapDiskCache mBitmapDiskCache;
     private Bitmap mDefaultBitmap;
     private Context mContext;
 
@@ -67,6 +68,7 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
         mThumbnailWidth = (int) context.getResources().getDimension(R.dimen.news_thumbnail_width);
         mThumbnailHeight = (int) context.getResources().getDimension(R.dimen.news_thumbnail_height);
 
+        mBitmapDiskCache = new BitmapDiskCache(context);
     }
 
     /**
@@ -80,7 +82,7 @@ public class NewsImageCache implements BitmapWorkerAsyncTask.IBitmapWorker {
         }
 
         if (cancelPotentialDownload(news, imageView)) {
-            BitmapWorkerAsyncTask task = new BitmapWorkerAsyncTask(this, imageView, news, mThumbnailWidth, mThumbnailHeight);
+            BitmapWorkerAsyncTask task = new BitmapWorkerAsyncTask(this, imageView, news, mThumbnailWidth, mThumbnailHeight, mBitmapDiskCache);
             imageView.setImageDrawable(new WorkerDrawable(mContext.getResources(), mDefaultBitmap, task));
             task.execute();
         }

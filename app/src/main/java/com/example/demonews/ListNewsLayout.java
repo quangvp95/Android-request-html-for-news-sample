@@ -2,7 +2,6 @@ package com.example.demonews;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.Preference;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -16,7 +15,7 @@ import com.example.demonews.entity.News;
 import java.util.ArrayList;
 
 public class ListNewsLayout extends SwipeRefreshLayout implements NewsFetcherAsyncTask.INewFetcher, SwipeRefreshLayout.OnRefreshListener {
-    private static final String SHARED_PREF_FILE = BuildConfig.APPLICATION_ID + "sharedprefs";
+    private static final String SHARED_PREF_FILE = BuildConfig.APPLICATION_ID + ".sharedprefs";
     private static final String LAST_TIME_REQUEST_KEY = "last_time_key";
 
     private NewsRecyclerView mRecyclerView;
@@ -42,12 +41,13 @@ public class ListNewsLayout extends SwipeRefreshLayout implements NewsFetcherAsy
 
     public void fetch() {
         mRecyclerView.fetch();
-        mRecyclerView.setNewsFetcherAsyncTaskCallback(this);
     }
 
-    public void setLoaderManager(LoaderManager supportLoaderManager) {
+    public void initLoader(LoaderManager supportLoaderManager) {
+        mRecyclerView.setNewsFetcherAsyncTaskCallback(this);
+
         SharedPreferences mPreference = getContext().getSharedPreferences(SHARED_PREF_FILE, Context.MODE_PRIVATE);
-        mRecyclerView.setLoaderManager(supportLoaderManager, mPreference.getLong(LAST_TIME_REQUEST_KEY, 0));
+        mRecyclerView.initLoader(supportLoaderManager, mPreference.getLong(LAST_TIME_REQUEST_KEY, 0));
     }
 
     @Override

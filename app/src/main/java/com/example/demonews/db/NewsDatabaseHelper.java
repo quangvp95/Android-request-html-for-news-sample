@@ -8,8 +8,9 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
     /**
      * Database Version:
      * 4: Thêm cột id là hashcode của url để dùng cho content provider
+     * 5: Bỏ cột image, image giờ lưu ra bộ nhớ ngoài
      */
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // Database Name
     private static final String DATABASE_NAME = "news_db";
@@ -28,7 +29,6 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
     static final String KEY_URL = "news_url";
     static final String KEY_TIME = "news_time";
     static final String KEY_IMG_URL = "news_img_url";
-    static final String KEY_IMAGE = "news_image";
 
     // Table create statement
     private static final String CREATE_TABLE_IMAGE = "CREATE TABLE " + DB_TABLE + "("+
@@ -37,7 +37,6 @@ public class NewsDatabaseHelper extends SQLiteOpenHelper {
             KEY_URL + " TEXT," +
             KEY_TIME + " INTEGER," +
             KEY_IMG_URL + " TEXT," +
-            KEY_IMAGE + " BLOB," +
             KEY_ID + " INTEGER PRIMARY KEY);";
 
     NewsDatabaseHelper(Context context) {

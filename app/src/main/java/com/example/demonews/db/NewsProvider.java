@@ -25,7 +25,6 @@ public class NewsProvider extends ContentProvider {
     public static final String KEY_URL = NewsDatabaseHelper.KEY_URL;
     public static final String KEY_TIME = NewsDatabaseHelper.KEY_TIME;
     public static final String KEY_IMG_URL = NewsDatabaseHelper.KEY_IMG_URL;
-    public static final String KEY_IMAGE = NewsDatabaseHelper.KEY_IMAGE;
 
     public static final int NEWS = 100;
     public static final int NEWS_ID = 110;

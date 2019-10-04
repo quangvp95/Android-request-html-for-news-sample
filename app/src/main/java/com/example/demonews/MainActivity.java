@@ -14,8 +14,8 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mListNewsLayout = findViewById(R.id.list_news);
-        mListNewsLayout.setLoaderManager(getSupportLoaderManager());
+        mListNewsLayout = findViewById(R.id.list_news_layout);
+        mListNewsLayout.initLoader(getSupportLoaderManager());
     }
 
     public void fetch(View view) {
