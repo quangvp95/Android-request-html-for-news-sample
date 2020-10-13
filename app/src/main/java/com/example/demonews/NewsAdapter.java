@@ -10,10 +10,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.demonews.cache.NewsImageCache;
 import com.example.demonews.entity.News;
+import com.example.demonews.ui.fragment.NewsBottomSheetFragment;
 
 import java.util.ArrayList;
 
@@ -38,7 +40,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull NewsViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull NewsViewHolder holder, final int position) {
         final News news = mList.get(position);
         holder.mHeadline.setText(news.getTitle());
         holder.mPublisher.setText(news.getAuthor());
@@ -47,6 +49,11 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                NewsBottomSheetFragment addPhotoBottomDialogFragment =
+                        NewsBottomSheetFragment.newInstance(mList, position);
+                addPhotoBottomDialogFragment.show(
+                        ((AppCompatActivity) mContext).getSupportFragmentManager(),
+                        NewsBottomSheetFragment.TAG);
                 Toast.makeText(mContext, news.getTitle(), Toast.LENGTH_SHORT).show();
             }
         });

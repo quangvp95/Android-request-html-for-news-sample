@@ -11,6 +11,7 @@ import com.example.demonews.R;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class News implements Comparable<News> {
+public class News implements Comparable<News>, Serializable {
     private static final long MINUTES = 60 * 1000;
     private static final long HOUR = 3600 * 1000;
 
