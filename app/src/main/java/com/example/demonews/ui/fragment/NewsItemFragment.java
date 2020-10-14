@@ -27,6 +27,7 @@ public class NewsItemFragment extends Fragment {
         WebView webView = rootView.findViewById(R.id.newsWebView);
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient());
+        webView.getSettings().setJavaScriptEnabled(true);
 
         Bundle bundle = getArguments();
         if (bundle != null) {
