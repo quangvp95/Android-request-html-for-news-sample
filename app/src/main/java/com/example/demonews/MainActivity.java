@@ -33,11 +33,6 @@ public class MainActivity extends AppCompatActivity implements NewsBottomSheetFr
     }
 
     @Override
-    public void refresh(News news) {
-
-    }
-
-    @Override
     public void share(News news) {
 
     }

@@ -10,7 +10,7 @@
         android:layout_height="20dp"
         android:contentDescription="@null"
         android:src="@drawable/seek_bar"
-        android:scaleType="centerCrop"
+        android:scaleType="fitXY"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
