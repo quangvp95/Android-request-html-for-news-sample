@@ -38,7 +38,7 @@ public class NewsItemFragment extends Fragment {
                 R.layout.item_layout, container, false);
 
         setRetainInstance(true);
-        model = new ViewModelProvider(getActivity(), new ViewModelFactory()).get(
+        model = new ViewModelProvider(requireActivity(), new ViewModelFactory()).get(
                 BottomSheetViewModel.class);
         TextView textTitle = rootView.findViewById(R.id.textTitle);
         textTitle.setOnClickListener(mOpenListener);

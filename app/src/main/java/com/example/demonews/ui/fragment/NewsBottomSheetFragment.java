@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,7 +30,6 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
     ArrayList<News> mList = null;
     int mPos = -1;
     Delegate mDelegate;
-    private BottomSheetViewModel mViewModel;
 
     public static NewsBottomSheetFragment newInstance(ArrayList<News> list, int position) {
         NewsBottomSheetFragment newsBottomSheetFragment = new NewsBottomSheetFragment();
@@ -64,15 +64,16 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
             viewPager.setCurrentItem(mPos, false);
         }
 
-        mViewModel = new ViewModelProvider(getActivity(), new ViewModelFactory()).get(
+        BottomSheetViewModel viewModel = new ViewModelProvider(requireActivity(),
+                new ViewModelFactory()).get(
                 BottomSheetViewModel.class);
-        mViewModel.getOpened().observe(getViewLifecycleOwner(), event -> {
+        viewModel.getOpened().observe(getViewLifecycleOwner(), event -> {
             if (!event.isDone()) {
                 event.done();
                 dismiss();
             }
         });
-        mViewModel.getClosed().observe(getViewLifecycleOwner(), event -> {
+        viewModel.getClosed().observe(getViewLifecycleOwner(), event -> {
             if (!event.isDone()) {
                 event.done();
                 dismiss();
@@ -87,22 +88,16 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         Dialog dialog = getDialog();
 
         if (dialog == null) return;
-        final View bottomSheet = dialog.findViewById(R.id.design_bottom_sheet);
+        View bottomSheet = dialog.findViewById(R.id.design_bottom_sheet);
         bottomSheet.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
 
-        final View view = getView();
-        if (view == null) return;
-        view.post(() -> {
-            View parent = (View) view.getParent();
-            CoordinatorLayout.LayoutParams params =
-                    (CoordinatorLayout.LayoutParams) (parent).getLayoutParams();
-            BottomSheetBehavior bottomSheetBehavior =
-                    (BottomSheetBehavior) params.getBehavior();
-            bottomSheetBehavior.setSkipCollapsed(true);
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            bottomSheetBehavior.setPeekHeight(view.getMeasuredHeight());
-            ((View) bottomSheet.getParent()).setBackgroundColor(Color.TRANSPARENT);
-        });
+        CoordinatorLayout.LayoutParams params =
+                (CoordinatorLayout.LayoutParams) bottomSheet.getLayoutParams();
+        BottomSheetBehavior<FrameLayout> bottomSheetBehavior =
+                (BottomSheetBehavior<FrameLayout>) params.getBehavior();
+        if (bottomSheetBehavior == null) return;
+        bottomSheetBehavior.setSkipCollapsed(true);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
     }
 
     public void setDelegate(Delegate delegate) {
