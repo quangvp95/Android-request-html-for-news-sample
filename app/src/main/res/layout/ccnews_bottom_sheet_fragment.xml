@@ -9,8 +9,8 @@
         android:layout_width="match_parent"
         android:layout_height="20dp"
         android:contentDescription="@null"
-        android:src="@drawable/seek_bar"
-        android:scaleType="fitXY"
+        android:src="@drawable/seekable_bar"
+        android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

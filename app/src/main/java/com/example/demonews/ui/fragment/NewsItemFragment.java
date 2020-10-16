@@ -1,5 +1,6 @@
 package com.example.demonews.ui.fragment;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,8 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -19,52 +22,59 @@ import com.example.demonews.viewmodel.BottomSheetViewModel;
 import com.example.demonews.viewmodel.ViewModelFactory;
 
 public class NewsItemFragment extends Fragment {
-    public static final String NEWS_TAG = "news";
-    News mNews;
-    private BottomSheetViewModel model;
+    public static final String POSITION_TAG = "position";
+    private BottomSheetViewModel mViewModel;
 
-    private View.OnClickListener mCloseListener = (view) -> {
-        model.close(new BottomSheetViewModel.Event(mNews));
-    };
+    private final View.OnClickListener mCloseListener = (View view) -> mViewModel.action(
+            new BottomSheetViewModel.Event(BottomSheetViewModel.EventType.CLOSE));
 
-    private View.OnClickListener mOpenListener = (view) -> {
-        model.open(new BottomSheetViewModel.Event(mNews));
-    };
+    private final View.OnClickListener mOpenListener = (View view) -> mViewModel.action(
+            new BottomSheetViewModel.Event(BottomSheetViewModel.EventType.OPEN));
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        ViewGroup rootView = (ViewGroup) inflater.inflate(
-                R.layout.item_layout, container, false);
+        return inflater.inflate(R.layout.ccnews_bottom_sheet_item_layout,
+                container, false);
+    }
 
-        setRetainInstance(true);
-        model = new ViewModelProvider(requireActivity(), new ViewModelFactory()).get(
+    @SuppressLint("SetJavaScriptEnabled")
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mViewModel = new ViewModelProvider(
+                getParentFragment() != null ? getParentFragment() : requireActivity(),
+                new ViewModelFactory()).get(
                 BottomSheetViewModel.class);
-        TextView textTitle = rootView.findViewById(R.id.textTitle);
+        TextView textTitle = view.findViewById(R.id.textTitle);
         textTitle.setOnClickListener(mOpenListener);
-        TextView textUrl = rootView.findViewById(R.id.textUrl);
+
+        TextView textUrl = view.findViewById(R.id.textUrl);
         textUrl.setOnClickListener(mOpenListener);
-        ImageView imgFavicon = rootView.findViewById(R.id.imgFavicon);
+
+        ImageView imgFavicon = view.findViewById(R.id.imgFavicon);
         imgFavicon.setOnClickListener(mOpenListener);
 
-        ImageView imgClose = rootView.findViewById(R.id.imgClose);
+        ImageView imgClose = view.findViewById(R.id.imgClose);
         imgClose.setOnClickListener(mCloseListener);
 
-        WebView webView = rootView.findViewById(R.id.newsWebView);
+        WebView webView = view.findViewById(R.id.newsWebView);
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            mNews = (News) bundle.getSerializable(NEWS_TAG);
+            int position = bundle.getInt(POSITION_TAG);
+            News news = mViewModel.getNewsAtIndex(position);
 
-            webView.loadUrl(mNews.getUrl());
-            textTitle.setText(mNews.getTitle());
-            textUrl.setText(mNews.getUrl());
+            if (news != null) {
+                webView.loadUrl(news.getUrl());
+                textTitle.setText(news.getTitle());
+                textUrl.setText(news.getUrl());
+            }
         }
 
-        return rootView;
     }
-
 }

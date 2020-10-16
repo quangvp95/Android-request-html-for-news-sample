@@ -1,7 +1,6 @@
 package com.example.demonews.ui.fragment;
 
 import android.app.Dialog;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,20 +21,19 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
     public static final String TAG = "ActionBottomDialog";
-    public static final String LIST_NEWS_TAG = "list_news";
-    public static final String POSITION_TAG = "position";
-    ArrayList<News> mList = null;
-    int mPos = -1;
+    public static final String KEY_NEWS_LIST = "list_news";
+    public static final String KEY_NEWS_POSITION = "position";
     Delegate mDelegate;
 
     public static NewsBottomSheetFragment newInstance(ArrayList<News> list, int position) {
         NewsBottomSheetFragment newsBottomSheetFragment = new NewsBottomSheetFragment();
         Bundle bundle = new Bundle();
-        bundle.putSerializable(LIST_NEWS_TAG, list);
-        bundle.putSerializable(POSITION_TAG, position);
+        bundle.putSerializable(KEY_NEWS_LIST, list);
+        bundle.putSerializable(KEY_NEWS_POSITION, position);
 
         newsBottomSheetFragment.setArguments(bundle);
         return newsBottomSheetFragment;
@@ -47,39 +45,38 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         return newInstance(list, 0);
     }
 
+    @Override
+    public int getTheme() {
+        return R.style.CustomBottomSheetDialogTheme;
+    }
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-        View inflate = inflater.inflate(R.layout.bottom_sheet, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.ccnews_bottom_sheet_fragment, container, false);
+    }
 
-        ViewPager2 viewPager = inflate.findViewById(R.id.viewPager);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        BottomSheetViewModel viewModel = new ViewModelProvider(this, new ViewModelFactory()).get(BottomSheetViewModel.class);
+
+        viewModel.getEventListener().observe(getViewLifecycleOwner(), this::onActionChanged);
+
+        ViewPager2 viewPager = view.findViewById(R.id.viewPager);
 
         Bundle bundle = getArguments();
-        if (bundle != null) {
-            mList = (ArrayList<News>) bundle.getSerializable(LIST_NEWS_TAG);
-            mPos = bundle.getInt(POSITION_TAG);
-            NewsBottomSheetAdapter adapter = new NewsBottomSheetAdapter(this, mList);
-            viewPager.setAdapter(adapter);
-            viewPager.setCurrentItem(mPos, false);
-        }
+        if (bundle != null && bundle.containsKey(KEY_NEWS_LIST)) {
+            viewModel.setCurrentPosition(bundle.getInt(KEY_NEWS_POSITION, 0));
+            viewPager.setCurrentItem(viewModel.getCurrentPosition(), false);
 
-        BottomSheetViewModel viewModel = new ViewModelProvider(requireActivity(),
-                new ViewModelFactory()).get(
-                BottomSheetViewModel.class);
-        viewModel.getOpened().observe(getViewLifecycleOwner(), event -> {
-            if (!event.isDone()) {
-                event.done();
-                dismiss();
-            }
-        });
-        viewModel.getClosed().observe(getViewLifecycleOwner(), event -> {
-            if (!event.isDone()) {
-                event.done();
-                dismiss();
-            }
-        });
-        return inflate;
+            List<News> newsList = (List<News>) bundle.getSerializable(KEY_NEWS_LIST);
+            if (newsList == null) return;
+            viewModel.setNewsList(newsList);
+            NewsBottomSheetAdapter adapter = new NewsBottomSheetAdapter(this, newsList);
+            viewPager.setAdapter(adapter);
+            viewPager.setUserInputEnabled(newsList.size() > 1);
+        }
     }
 
     @Override
@@ -98,6 +95,13 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         if (bottomSheetBehavior == null) return;
         bottomSheetBehavior.setSkipCollapsed(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+    }
+
+    private void onActionChanged(BottomSheetViewModel.Event event) {
+        if (event.isNotDone()) {
+            event.done();
+            NewsBottomSheetFragment.this.dismiss();
+        }
     }
 
     public void setDelegate(Delegate delegate) {

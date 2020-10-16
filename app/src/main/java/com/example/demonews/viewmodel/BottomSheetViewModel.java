@@ -6,50 +6,45 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.demonews.entity.News;
 
+import java.util.List;
+
 public class BottomSheetViewModel extends ViewModel {
-    private final MutableLiveData<Event> opened = new MutableLiveData<>();
-    private final MutableLiveData<Event> closed = new MutableLiveData<>();
-    private final MutableLiveData<Event> bookmarked = new MutableLiveData<>();
-    private final MutableLiveData<Event> shared = new MutableLiveData<>();
+    private final MutableLiveData<Event> eventListener = new MutableLiveData<>();
+    private List<News> newsList;
+    private int currentPosition = -1;
 
-    public void open(Event item) {
-        opened.setValue(item);
+    public LiveData<Event> getEventListener() {
+        return eventListener;
     }
 
-    public LiveData<Event> getOpened() {
-        return opened;
+    public void action(Event item) {
+        eventListener.setValue(item);
     }
 
-    public void close(Event item) {
-        closed.setValue(item);
+    public News getNewsAtIndex(int index) {
+        if (newsList == null || newsList.size() <= index)
+            return null;
+        return newsList.get(index);
     }
 
-    public LiveData<Event> getClosed() {
-        return closed;
+    public void setNewsList(List<News> newsList) {
+        this.newsList = newsList;
     }
 
-    public void bookmark(Event item) {
-        bookmarked.setValue(item);
+    public int getCurrentPosition() {
+        return currentPosition;
     }
 
-    public LiveData<Event> getBookmarked() {
-        return bookmarked;
-    }
-
-    public void share(Event item) {
-        shared.setValue(item);
-    }
-
-    public LiveData<Event> getShared() {
-        return shared;
+    public void setCurrentPosition(int currentPosition) {
+        this.currentPosition = currentPosition;
     }
 
     public static class Event {
-        News news;
+        EventType mType;
         boolean isDone;
 
-        public Event(News news) {
-            this.news = news;
+        public Event(EventType type) {
+            this.mType = type;
             isDone = false;
         }
 
@@ -57,8 +52,12 @@ public class BottomSheetViewModel extends ViewModel {
             isDone = true;
         }
 
-        public boolean isDone() {
-            return isDone;
+        public boolean isNotDone() {
+            return !isDone;
         }
+    }
+
+    public enum EventType {
+        OPEN, CLOSE, SHARE, BOOKMARK
     }
 }
