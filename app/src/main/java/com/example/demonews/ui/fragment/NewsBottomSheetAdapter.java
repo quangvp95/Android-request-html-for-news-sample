@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.adapter.FragmentViewHolder;
 
 import com.example.demonews.entity.News;
 
@@ -29,6 +30,6 @@ public class NewsBottomSheetAdapter  extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return mList.size();
+        return Integer.MAX_VALUE;
     }
 }

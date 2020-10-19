@@ -3,6 +3,7 @@ package com.example.demonews.ui.fragment;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -33,7 +34,7 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         NewsBottomSheetFragment newsBottomSheetFragment = new NewsBottomSheetFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(KEY_NEWS_LIST, list);
-        bundle.putSerializable(KEY_NEWS_POSITION, position);
+        bundle.putInt(KEY_NEWS_POSITION, position);
 
         newsBottomSheetFragment.setArguments(bundle);
         return newsBottomSheetFragment;
@@ -59,23 +60,25 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         BottomSheetViewModel viewModel = new ViewModelProvider(this, new ViewModelFactory()).get(BottomSheetViewModel.class);
 
         viewModel.getEventListener().observe(getViewLifecycleOwner(), this::onActionChanged);
 
         ViewPager2 viewPager = view.findViewById(R.id.viewPager);
+        viewPager.setOffscreenPageLimit(1);
 
         Bundle bundle = getArguments();
         if (bundle != null && bundle.containsKey(KEY_NEWS_LIST)) {
-            viewModel.setCurrentPosition(bundle.getInt(KEY_NEWS_POSITION, 0));
-            viewPager.setCurrentItem(viewModel.getCurrentPosition(), false);
-
             List<News> newsList = (List<News>) bundle.getSerializable(KEY_NEWS_LIST);
             if (newsList == null) return;
             viewModel.setNewsList(newsList);
             NewsBottomSheetAdapter adapter = new NewsBottomSheetAdapter(this, newsList);
             viewPager.setAdapter(adapter);
             viewPager.setUserInputEnabled(newsList.size() > 1);
+
+            viewModel.setCurrentPosition(bundle.getInt(KEY_NEWS_POSITION, 0));
+            viewPager.setCurrentItem(viewModel.getCurrentPosition(), false);
         }
     }
 
@@ -95,6 +98,17 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         if (bottomSheetBehavior == null) return;
         bottomSheetBehavior.setSkipCollapsed(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                bottomSheet.toString();
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                bottomSheet.toString();
+            }
+        });
     }
 
     private void onActionChanged(BottomSheetViewModel.Event event) {

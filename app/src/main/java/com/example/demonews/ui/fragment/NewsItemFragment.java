@@ -10,6 +10,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ import com.example.demonews.viewmodel.ViewModelFactory;
 public class NewsItemFragment extends Fragment {
     public static final String POSITION_TAG = "position";
     private BottomSheetViewModel mViewModel;
+    private WebView webView;
 
     private final View.OnClickListener mCloseListener = (View view) -> mViewModel.action(
             new BottomSheetViewModel.Event(BottomSheetViewModel.EventType.CLOSE));
@@ -59,7 +61,7 @@ public class NewsItemFragment extends Fragment {
         ImageView imgClose = view.findViewById(R.id.imgClose);
         imgClose.setOnClickListener(mCloseListener);
 
-        WebView webView = view.findViewById(R.id.newsWebView);
+        webView = view.findViewById(R.id.newsWebView);
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient());
         webView.getSettings().setJavaScriptEnabled(true);
@@ -70,11 +72,21 @@ public class NewsItemFragment extends Fragment {
             News news = mViewModel.getNewsAtIndex(position);
 
             if (news != null) {
-                webView.loadUrl(news.getUrl());
+                if (savedInstanceState == null) {
+                    webView.loadUrl(news.getUrl());
+                } else {
+                    webView.restoreState(savedInstanceState);
+                }
                 textTitle.setText(news.getTitle());
                 textUrl.setText(news.getUrl());
             }
         }
 
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        webView.saveState(outState);
     }
 }

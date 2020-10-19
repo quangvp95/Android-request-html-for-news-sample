@@ -14,6 +14,7 @@
         <item name="android:windowIsFloating">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+        <item name="layout_behavior">com.example.demonews.ui.fragment.CustomBottomSheetBehavior</item>
     </style>
 
     <style name="CustomBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">

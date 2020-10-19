@@ -22,9 +22,9 @@ public class BottomSheetViewModel extends ViewModel {
     }
 
     public News getNewsAtIndex(int index) {
-        if (newsList == null || newsList.size() <= index)
+        if (newsList == null || newsList.size() == 0)
             return null;
-        return newsList.get(index);
+        return newsList.get(index % newsList.size());
     }
 
     public void setNewsList(List<News> newsList) {
