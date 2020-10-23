@@ -1,4 +1,4 @@
-package com.example.demonews.ui.fragment;
+package com.example.demonews.ui.fragment.pager;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -22,7 +22,7 @@ import com.example.demonews.entity.News;
 import com.example.demonews.viewmodel.BottomSheetViewModel;
 import com.example.demonews.viewmodel.ViewModelFactory;
 
-public class NewsItemFragment extends Fragment {
+public class NewsPagerItemFragment extends Fragment {
     public static final String POSITION_TAG = "position";
     private BottomSheetViewModel mViewModel;
     private WebView webView;

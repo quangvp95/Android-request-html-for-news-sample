@@ -1,9 +1,8 @@
-package com.example.demonews.ui.fragment;
+package com.example.demonews.ui.fragment.pager;
 
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -11,11 +10,14 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.demonews.R;
 import com.example.demonews.entity.News;
+import com.example.demonews.ui.fragment.Delegate;
 import com.example.demonews.viewmodel.BottomSheetViewModel;
 import com.example.demonews.viewmodel.ViewModelFactory;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -24,23 +26,22 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
-    public static final String TAG = "ActionBottomDialog";
+public class NewsPagerSheetFragment extends BottomSheetDialogFragment {
     public static final String KEY_NEWS_LIST = "list_news";
     public static final String KEY_NEWS_POSITION = "position";
     Delegate mDelegate;
 
-    public static NewsBottomSheetFragment newInstance(ArrayList<News> list, int position) {
-        NewsBottomSheetFragment newsBottomSheetFragment = new NewsBottomSheetFragment();
+    public static NewsPagerSheetFragment newInstance(ArrayList<News> list, int position) {
+        NewsPagerSheetFragment newsPagerSheetFragment = new NewsPagerSheetFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable(KEY_NEWS_LIST, list);
         bundle.putInt(KEY_NEWS_POSITION, position);
 
-        newsBottomSheetFragment.setArguments(bundle);
-        return newsBottomSheetFragment;
+        newsPagerSheetFragment.setArguments(bundle);
+        return newsPagerSheetFragment;
     }
 
-    public static NewsBottomSheetFragment newInstance(News news) {
+    public static NewsPagerSheetFragment newInstance(News news) {
         ArrayList<News> list = new ArrayList<>(1);
         list.add(news);
         return newInstance(list, 0);
@@ -54,7 +55,7 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.ccnews_bottom_sheet_fragment, container, false);
+        return inflater.inflate(R.layout.ccnews_pager_sheet_fragment, container, false);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
             List<News> newsList = (List<News>) bundle.getSerializable(KEY_NEWS_LIST);
             if (newsList == null) return;
             viewModel.setNewsList(newsList);
-            NewsBottomSheetAdapter adapter = new NewsBottomSheetAdapter(this, newsList);
+            NewsPagerSheetAdapter adapter = new NewsPagerSheetAdapter(this, newsList);
             viewPager.setAdapter(adapter);
             viewPager.setUserInputEnabled(newsList.size() > 1);
 
@@ -98,23 +99,12 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         if (bottomSheetBehavior == null) return;
         bottomSheetBehavior.setSkipCollapsed(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                bottomSheet.toString();
-            }
-
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                bottomSheet.toString();
-            }
-        });
     }
 
     private void onActionChanged(BottomSheetViewModel.Event event) {
         if (event.isNotDone()) {
             event.done();
-            NewsBottomSheetFragment.this.dismiss();
+            NewsPagerSheetFragment.this.dismiss();
         }
     }
 
@@ -122,11 +112,26 @@ public class NewsBottomSheetFragment extends BottomSheetDialogFragment {
         mDelegate = delegate;
     }
 
-    public interface Delegate {
-        void share(News news);
+    static class NewsPagerSheetAdapter extends FragmentStateAdapter {
+        private List<News> mList;
+        public NewsPagerSheetAdapter(@NonNull Fragment fragment, List<News> newsList) {
+            super(fragment);
+            mList = newsList;
+        }
 
-        void openInNewTab(News news);
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            NewsPagerItemFragment fragment = new NewsPagerItemFragment();
+            Bundle bundle = new Bundle();
+            bundle.putSerializable(NewsPagerItemFragment.POSITION_TAG, position);
+            fragment.setArguments(bundle);
+            return fragment;
+        }
 
-        void bookmarks(News news);
+        @Override
+        public int getItemCount() {
+            return mList.size();
+        }
     }
 }

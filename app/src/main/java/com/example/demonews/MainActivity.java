@@ -8,9 +8,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.demonews.entity.News;
-import com.example.demonews.ui.fragment.NewsBottomSheetFragment;
+import com.example.demonews.ui.fragment.Delegate;
 
-public class MainActivity extends AppCompatActivity implements NewsBottomSheetFragment.Delegate {
+public class MainActivity extends AppCompatActivity implements Delegate {
+    public static final String TAG = "ActionBottomDialog";
 
     private ListNewsLayout mListNewsLayout;
 

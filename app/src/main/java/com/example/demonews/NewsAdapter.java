@@ -1,5 +1,7 @@
 package com.example.demonews;
 
+import static com.example.demonews.MainActivity.TAG;
+
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.demonews.cache.NewsImageCache;
 import com.example.demonews.entity.News;
-import com.example.demonews.ui.fragment.NewsBottomSheetFragment;
+import com.example.demonews.ui.fragment.recycler.NewsRecyclerSheetFragment;
 
 import java.util.ArrayList;
 
@@ -46,16 +48,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         holder.mPublisher.setText(news.getAuthor());
         holder.mDate.setText(news.getNewsAgeString(mContext));
         mImageCache.loadBitmap(holder.mThumbnail, news);
-        holder.mView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NewsBottomSheetFragment addPhotoBottomDialogFragment =
-                        NewsBottomSheetFragment.newInstance(mList, position);
-                addPhotoBottomDialogFragment.show(
-                        ((AppCompatActivity) mContext).getSupportFragmentManager(),
-                        NewsBottomSheetFragment.TAG);
-                Toast.makeText(mContext, news.getTitle(), Toast.LENGTH_SHORT).show();
-            }
+        holder.mView.setOnClickListener(v -> {
+            NewsRecyclerSheetFragment addPhotoBottomDialogFragment =
+                    NewsRecyclerSheetFragment.newInstance(mList, position);
+            addPhotoBottomDialogFragment.show(
+                    ((AppCompatActivity) mContext).getSupportFragmentManager(), TAG);
+            Toast.makeText(mContext, news.getTitle(), Toast.LENGTH_SHORT).show();
         });
     }
 
